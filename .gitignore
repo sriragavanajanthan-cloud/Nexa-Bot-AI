@@ -1,0 +1,13 @@
+# Dependencies
+Nexa Bot AI/node_modules/
+
+# Build output
+Nexa Bot AI/dist/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store

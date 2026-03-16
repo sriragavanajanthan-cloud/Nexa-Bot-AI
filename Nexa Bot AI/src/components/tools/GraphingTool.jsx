@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,6 +6,34 @@ import { BarChart2, Sparkles } from "lucide-react";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 const COLORS = ["#22d3ee", "#4ade80", "#f59e0b", "#f43f5e", "#a78bfa", "#fb923c"];
+
+const parsePromptData = (prompt) => {
+  const matches = [...prompt.matchAll(/([A-Za-z][\w\s-]{0,20})\s*[:=]\s*(-?\d+(?:\.\d+)?)/g)];
+  if (matches.length >= 2) {
+    return matches.slice(0, 8).map((m) => ({
+      name: m[1].trim(),
+      value: Number(m[2]),
+    }));
+  }
+
+  const labels = prompt
+    .split(/[,\n]/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 8);
+
+  if (labels.length >= 2) {
+    return labels.map((label, i) => ({
+      name: label,
+      value: 15 + ((label.length * 17 + i * 11) % 80),
+    }));
+  }
+
+  return ["A", "B", "C", "D", "E", "F"].map((name, i) => ({
+    name,
+    value: 20 + ((prompt.length * 13 + i * 19) % 75),
+  }));
+};
 
 export default function GraphingTool() {
   const [prompt, setPrompt] = useState("");
@@ -18,29 +45,12 @@ export default function GraphingTool() {
   const generate = async () => {
     if (!prompt.trim()) return;
     setLoading(true);
-    const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `Generate chart data for: "${prompt}". Return a JSON with: { "title": "chart title", "data": [ { "name": "label", "value": number }, ... ] }. Return 5-8 data points.`,
-      response_json_schema: {
-        type: "object",
-        properties: {
-          title: { type: "string" },
-          data: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                name: { type: "string" },
-                value: { type: "number" }
-              }
-            }
-          }
-        }
-      }
-    });
-    if (result?.data) {
-      setChartData(result.data);
-      setChartTitle(result.title || prompt);
-    }
+
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    const generatedData = parsePromptData(prompt);
+    setChartData(generatedData);
+    setChartTitle(prompt);
     setLoading(false);
   };
 
@@ -97,7 +107,7 @@ export default function GraphingTool() {
       <Textarea
         value={prompt}
         onChange={e => setPrompt(e.target.value)}
-        placeholder="Describe the data to chart, e.g. 'Monthly sales for 2024 for a tech startup'"
+        placeholder="Enter labels like 'Jan: 20, Feb: 30, Mar: 24' or a topic to auto-generate sample data"
         className="bg-[#1a1a1a] border-white/10 text-white resize-none min-h-[80px]"
       />
 

@@ -1,8 +1,43 @@
-import { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Upload, Wand2, Download } from "lucide-react";
+
+const getFilterFromInstruction = (instruction) => {
+  const text = instruction.toLowerCase();
+  const filters = [];
+
+  if (text.includes("grayscale") || text.includes("black and white")) filters.push("grayscale(1)");
+  if (text.includes("sepia") || text.includes("vintage")) filters.push("sepia(0.7)");
+  if (text.includes("bright") || text.includes("brightness")) filters.push("brightness(1.15)");
+  if (text.includes("dark") || text.includes("dim")) filters.push("brightness(0.85)");
+  if (text.includes("contrast")) filters.push("contrast(1.2)");
+  if (text.includes("blur") || text.includes("soft")) filters.push("blur(1.5px)");
+
+  return filters.length ? filters.join(" ") : "saturate(1.1) contrast(1.05)";
+};
+
+const applyLocalEdit = (imageUrl, instruction) => new Promise((resolve, reject) => {
+  const img = new Image();
+  img.onload = () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth || img.width;
+    canvas.height = img.naturalHeight || img.height;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      reject(new Error("Could not get 2D context"));
+      return;
+    }
+
+    ctx.filter = getFilterFromInstruction(instruction);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    resolve(canvas.toDataURL("image/png"));
+  };
+  img.onerror = () => reject(new Error("Failed to load image"));
+  img.src = imageUrl;
+});
 
 export default function ImageEditor() {
   const [uploadedUrl, setUploadedUrl] = useState(null);
@@ -11,25 +46,34 @@ export default function ImageEditor() {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
 
+  useEffect(() => () => {
+    if (uploadedUrl?.startsWith("blob:")) URL.revokeObjectURL(uploadedUrl);
+  }, [uploadedUrl]);
+
   const handleUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     setUploading(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    setUploadedUrl(file_url);
+
+    const localUrl = URL.createObjectURL(file);
+    setUploadedUrl(localUrl);
     setResultUrl(null);
+
     setUploading(false);
   };
 
   const editImage = async () => {
     if (!uploadedUrl || !instruction.trim()) return;
+
     setLoading(true);
-    const result = await base44.integrations.Core.GenerateImage({
-      prompt: instruction,
-      existing_image_urls: [uploadedUrl],
-    });
-    setResultUrl(result?.url || null);
-    setLoading(false);
+    try {
+      const editedDataUrl = await applyLocalEdit(uploadedUrl, instruction);
+      setResultUrl(editedDataUrl);
+    } catch {
+      setResultUrl(uploadedUrl);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const download = (url) => {
@@ -46,7 +90,8 @@ export default function ImageEditor() {
         <h2 className="text-lg font-bold">Image Editor</h2>
       </div>
 
-      {/* Upload */}
+      <p className="text-xs text-white/50">Local mode: edits are applied in your browser (no Base44 required).</p>
+
       <label className="cursor-pointer">
         <div className="border-2 border-dashed border-white/20 rounded-xl p-6 text-center hover:border-cyan-500/50 transition-colors">
           {uploading ? (
@@ -66,7 +111,7 @@ export default function ImageEditor() {
       <Textarea
         value={instruction}
         onChange={e => setInstruction(e.target.value)}
-        placeholder="Describe what you want to change or add to the image..."
+        placeholder="Try: 'make it grayscale', 'vintage sepia', 'increase contrast'"
         className="bg-[#1a1a1a] border-white/10 text-white resize-none min-h-[80px]"
       />
 

@@ -5,6 +5,19 @@ import MessageBubble from "@/components/chat/MessageBubble";
 import ChatInput from "@/components/chat/ChatInput";
 import { Sparkles, Zap, Code, BookOpen } from "lucide-react";
 
+
+const buildFallbackReply = (text, fileUrls) => {
+  if (fileUrls?.length) {
+    return "I received your file, but I couldn't reach the AI backend right now. Please try again in a moment.";
+  }
+
+  if (!text?.trim()) {
+    return "I couldn't process that request right now. Please try again.";
+  }
+
+  return `I couldn't reach the AI backend right now. You said: "${text.trim()}". Please try again in a moment.`;
+};
+
 const SUGGESTED_PROMPTS = [
   { icon: Sparkles, text: "What can you help me with?" },
   { icon: Zap, text: "Write a Python script to sort a list" },
@@ -86,29 +99,42 @@ export default function Chat() {
   const sendMessage = async (text, fileUrls) => {
     let conv = agentConversation;
     const titleText = text || "Shared a file";
-    if (!conv) {
-      let title = titleText.slice(0, 40);
-      try {
-        const result = await base44.integrations.Core.InvokeLLM({
-          prompt: `Create a 2-4 word title for this message: "${titleText}". Return ONLY the title words, no punctuation, no quotes, no explanation.`,
-        });
-        if (result) title = result.trim().slice(0, 50);
-      } catch {}
-      conv = await base44.agents.createConversation({
-        agent_name: "nexabot",
-        metadata: { name: title },
-      });
-      setAgentConversation(conv);
-      setCurrentConvId(conv.id);
-      setConversations((prev) => [conv, ...prev]);
-    }
 
     const userMsg = { role: "user", content: text, file_urls: fileUrls, timestamp: new Date().toISOString() };
     setMessages((prev) => [...prev, userMsg]);
     setIsLoading(true);
 
-    await base44.agents.addMessage(conv, { role: "user", content: text, file_urls: fileUrls });
-    setIsLoading(false);
+    try {
+      if (!conv) {
+        let title = titleText.slice(0, 40);
+        try {
+          const result = await base44.integrations.Core.InvokeLLM({
+            prompt: `Create a 2-4 word title for this message: "${titleText}". Return ONLY the title words, no punctuation, no quotes, no explanation.`,
+          });
+          if (result) title = result.trim().slice(0, 50);
+        } catch {}
+
+        conv = await base44.agents.createConversation({
+          agent_name: "nexabot",
+          metadata: { name: title },
+        });
+        setAgentConversation(conv);
+        setCurrentConvId(conv.id);
+        setConversations((prev) => [conv, ...prev]);
+      }
+
+      await base44.agents.addMessage(conv, { role: "user", content: text, file_urls: fileUrls });
+    } catch (error) {
+      const fallbackMsg = {
+        role: "assistant",
+        content: buildFallbackReply(text, fileUrls),
+        timestamp: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, fallbackMsg]);
+      console.error("Failed to send message to backend:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

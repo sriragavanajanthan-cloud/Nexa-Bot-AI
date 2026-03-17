@@ -1,0 +1,21 @@
+{
+  "name": "Nexa Bot AI",
+  "short_name": "NexaBot",
+  "description": "Nexa Bot AI chat assistant web app",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111111",
+  "theme_color": "#111111",
+  "icons": [
+    {
+      "src": "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/926442f73_NEXAbotAI.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/926442f73_NEXAbotAI.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

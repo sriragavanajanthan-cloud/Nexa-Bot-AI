@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { invokeLLM } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,24 +18,9 @@ export default function GraphingTool() {
   const generate = async () => {
     if (!prompt.trim()) return;
     setLoading(true);
-    const result = await base44.integrations.Core.InvokeLLM({
+    const result = await invokeLLM({
       prompt: `Generate chart data for: "${prompt}". Return a JSON with: { "title": "chart title", "data": [ { "name": "label", "value": number }, ... ] }. Return 5-8 data points.`,
-      response_json_schema: {
-        type: "object",
-        properties: {
-          title: { type: "string" },
-          data: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                name: { type: "string" },
-                value: { type: "number" }
-              }
-            }
-          }
-        }
-      }
+      responseJsonSchema: { type: "object", properties: { title: { type: "string" }, data: { type: "array", items: { type: "object", properties: { name: { type: "string" }, value: { type: "number" } } } } } }
     });
     if (result?.data) {
       setChartData(result.data);

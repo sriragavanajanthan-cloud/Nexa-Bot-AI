@@ -18,11 +18,17 @@ const getErrorMessage = (error) => {
 };
 
 const requestWebChatResponse = async (text) => {
-  const response = await fetch("/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: text }),
-  });
+  let response;
+
+  try {
+    response = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text }),
+    });
+  } catch {
+    throw new Error("Chat service is temporarily unreachable");
+  }
 
   const data = await response.json().catch(() => ({}));
 
@@ -42,6 +48,10 @@ const buildFallbackReply = (text, fileUrls, error) => {
 
   if (errorMessage.includes("invalid_api_key") || errorMessage.includes("incorrect api key")) {
     return "I can't respond right now because the AI backend authentication failed. Please try again later.";
+  }
+
+  if (errorMessage.includes("failed to fetch") || errorMessage.includes("temporarily unreachable")) {
+    return "I can't reach the chat service right now. Please check your deployment and try again in a moment.";
   }
 
   if (fileUrls?.length) {

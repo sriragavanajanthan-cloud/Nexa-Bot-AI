@@ -6,7 +6,30 @@ import ChatInput from "@/components/chat/ChatInput";
 import { Sparkles, Zap, Code, BookOpen } from "lucide-react";
 
 
-const buildFallbackReply = (text, fileUrls) => {
+const getErrorMessage = (error) => {
+  if (!error) return "";
+
+  if (typeof error === "string") return error;
+
+  return (
+    error?.response?.data?.error?.message ||
+    error?.response?.data?.message ||
+    error?.message ||
+    ""
+  );
+};
+
+const buildFallbackReply = (text, fileUrls, error) => {
+  const errorMessage = getErrorMessage(error).toLowerCase();
+
+  if (errorMessage.includes("exceeded your current quota") || errorMessage.includes("check your plan and billing")) {
+    return "I can't respond right now because the OpenAI usage quota for this project has been exceeded. Please update billing/quota in OpenAI, then try again.";
+  }
+
+  if (errorMessage.includes("invalid_api_key") || errorMessage.includes("incorrect api key")) {
+    return "I can't respond right now because the OpenAI API key appears to be invalid. Please verify the key in your backend/project settings and try again.";
+  }
+
   if (fileUrls?.length) {
     return "I received your file, but I couldn't reach the AI backend right now. Please try again in a moment.";
   }
@@ -127,7 +150,7 @@ export default function Chat() {
     } catch (error) {
       const fallbackMsg = {
         role: "assistant",
-        content: buildFallbackReply(text, fileUrls),
+        content: buildFallbackReply(text, fileUrls, error),
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, fallbackMsg]);

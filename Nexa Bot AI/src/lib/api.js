@@ -6,7 +6,7 @@ You provide clear, accurate, and helpful responses formatted in markdown.
 When writing code, always use proper syntax highlighting with language tags.`;
 
 export function getApiKey() {
-  return import.meta.env.VITE_OPENAI_API_KEY || "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";
+  return import.meta.env.VITE_OPENAI_API_KEY || "";
 }
 
 export async function sendChatMessage(messages) {

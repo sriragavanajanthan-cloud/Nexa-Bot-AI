@@ -6,11 +6,7 @@ You provide clear, accurate, and helpful responses formatted in markdown.
 When writing code, always use proper syntax highlighting with language tags.`;
 
 export function getApiKey() {
-  return localStorage.getItem("openai_api_key") || "";
-}
-
-export function setApiKey(key) {
-  localStorage.setItem("openai_api_key", key);
+  return import.meta.env.VITE_OPENAI_API_KEY || "";
 }
 
 export async function sendChatMessage(messages) {

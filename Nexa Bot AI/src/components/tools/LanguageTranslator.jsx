@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { invokeLLM } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -22,9 +22,7 @@ export default function LanguageTranslator() {
   const translate = async () => {
     if (!input.trim()) return;
     setLoading(true);
-    const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `Translate the following text from ${from} to ${to}. Return only the translated text, nothing else.\n\n"${input}"`,
-    });
+    const result = await invokeLLM({ prompt: `Translate the following text from ${from} to ${to}. Return only the translated text, nothing else.\n\n"${input}"` });
     setOutput(result || "");
     setLoading(false);
   };

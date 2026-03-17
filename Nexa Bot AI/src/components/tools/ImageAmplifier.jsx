@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { generateImage, uploadFile } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, Zap, Download } from "lucide-react";
@@ -25,7 +25,7 @@ export default function ImageAmplifier() {
     const file = e.target.files[0];
     if (!file) return;
     setUploading(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    const { file_url } = await uploadFile(file);
     setUploadedUrl(file_url);
     setResultUrl(null);
     setUploading(false);
@@ -35,10 +35,7 @@ export default function ImageAmplifier() {
     if (!uploadedUrl) return;
     setLoading(true);
     const label = ENHANCEMENTS.find(e => e.value === enhancement)?.label || enhancement;
-    const result = await base44.integrations.Core.GenerateImage({
-      prompt: `${label} — apply professional photo enhancement: improve quality, sharpness, lighting, and details dramatically.`,
-      existing_image_urls: [uploadedUrl],
-    });
+    const result = await generateImage({ prompt: `${label} — apply professional photo enhancement: improve quality, sharpness, lighting, and details dramatically.`, existing_image_urls: [uploadedUrl] });
     setResultUrl(result?.url || null);
     setLoading(false);
   };

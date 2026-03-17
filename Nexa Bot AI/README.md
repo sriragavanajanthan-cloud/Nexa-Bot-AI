@@ -37,3 +37,16 @@ Open [Base44.com](http://Base44.com) and click on Publish.
 Documentation: [https://docs.base44.com/Integrations/Using-GitHub](https://docs.base44.com/Integrations/Using-GitHub)
 
 Support: [https://app.base44.com/support](https://app.base44.com/support)
+
+
+**Optional: direct OpenAI fallback (without Base44 responses)**
+
+If Base44 runtime calls fail, chat can fall back to a Vercel serverless API at `/api/chat`.
+Set this server-side env var in Vercel:
+
+```
+OPENAI_API_KEY=your_openai_api_key
+OPENAI_MODEL=gpt-4o-mini
+```
+
+> Do not prefix these with `VITE_` (they must stay server-only).

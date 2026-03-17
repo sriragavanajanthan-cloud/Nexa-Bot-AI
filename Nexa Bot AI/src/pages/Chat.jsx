@@ -5,10 +5,8 @@ import MessageBubble from "@/components/chat/MessageBubble";
 import ChatInput from "@/components/chat/ChatInput";
 import { Sparkles, Zap, Code, BookOpen } from "lucide-react";
 
-
 const getErrorMessage = (error) => {
   if (!error) return "";
-
   if (typeof error === "string") return error;
 
   return (
@@ -17,6 +15,22 @@ const getErrorMessage = (error) => {
     error?.message ||
     ""
   );
+};
+
+const requestWebChatResponse = async (text) => {
+  const response = await fetch("/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: text }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data?.error || `Chat API request failed with status ${response.status}`);
+  }
+
+  return data?.reply;
 };
 
 const buildFallbackReply = (text, fileUrls, error) => {
@@ -31,7 +45,7 @@ const buildFallbackReply = (text, fileUrls, error) => {
   }
 
   if (fileUrls?.length) {
-    return "I received your file, but I couldn't reach the AI backend right now. Please try again in a moment.";
+    return "I received your file, but file processing is unavailable right now. Please try again in a moment.";
   }
 
   if (!text?.trim()) {
@@ -68,33 +82,71 @@ export default function Chat() {
 
   useEffect(() => {
     if (!currentConvId) return;
-    const unsub = base44.agents.subscribeToConversation(currentConvId, (data) => {
-      setMessages(data.messages || []);
-    });
-    return unsub;
+
+    try {
+      const unsub = base44.agents.subscribeToConversation(currentConvId, (data) => {
+        setMessages(data.messages || []);
+      });
+      return unsub;
+    } catch (error) {
+      console.warn("Conversation live subscription unavailable:", error);
+      return undefined;
+    }
   }, [currentConvId]);
 
   const loadConversations = async () => {
-    const convs = await base44.agents.listConversations({ agent_name: "nexabot" });
-    setConversations(convs || []);
+    try {
+      const convs = await base44.agents.listConversations({ agent_name: "nexabot" });
+      setConversations(convs || []);
+    } catch (error) {
+      console.warn("Unable to load Base44 conversations, using local mode:", error);
+      setConversations([]);
+    }
   };
 
   const createNewConversation = async () => {
-    const conv = await base44.agents.createConversation({
-      agent_name: "nexabot",
-      metadata: { name: "New Chat" },
-    });
-    setAgentConversation(conv);
-    setCurrentConvId(conv.id);
+    try {
+      const conv = await base44.agents.createConversation({
+        agent_name: "nexabot",
+        metadata: { name: "New Chat" },
+      });
+      setAgentConversation(conv);
+      setCurrentConvId(conv.id);
+      setMessages([]);
+      setConversations((prev) => [conv, ...prev]);
+      return;
+    } catch (error) {
+      console.warn("Unable to create remote conversation, starting local chat:", error);
+    }
+
+    const localConv = {
+      id: `local-${Date.now()}`,
+      metadata: { name: "Local Chat" },
+      messages: [],
+    };
+    setAgentConversation(localConv);
+    setCurrentConvId(localConv.id);
     setMessages([]);
-    setConversations((prev) => [conv, ...prev]);
+    setConversations((prev) => [localConv, ...prev]);
   };
 
   const selectConversation = async (id) => {
-    const conv = await base44.agents.getConversation(id);
-    setAgentConversation(conv);
-    setCurrentConvId(id);
-    setMessages(conv.messages || []);
+    const localConversation = conversations.find((c) => c.id === id && `${c.id}`.startsWith("local-"));
+    if (localConversation) {
+      setAgentConversation(localConversation);
+      setCurrentConvId(id);
+      setMessages(localConversation.messages || []);
+      return;
+    }
+
+    try {
+      const conv = await base44.agents.getConversation(id);
+      setAgentConversation(conv);
+      setCurrentConvId(id);
+      setMessages(conv.messages || []);
+    } catch (error) {
+      console.warn("Failed to load conversation:", error);
+    }
   };
 
   const deleteConversation = async (id) => {
@@ -107,8 +159,17 @@ export default function Chat() {
   };
 
   const renameConversation = async (id, newName) => {
-    await base44.agents.updateConversation(id, { metadata: { name: newName } });
-    setConversations((prev) => prev.map((c) => c.id === id ? { ...c, metadata: { ...c.metadata, name: newName } } : c));
+    if (`${id}`.startsWith("local-")) {
+      setConversations((prev) => prev.map((c) => c.id === id ? { ...c, metadata: { ...c.metadata, name: newName } } : c));
+      return;
+    }
+
+    try {
+      await base44.agents.updateConversation(id, { metadata: { name: newName } });
+      setConversations((prev) => prev.map((c) => c.id === id ? { ...c, metadata: { ...c.metadata, name: newName } } : c));
+    } catch (error) {
+      console.warn("Failed to rename conversation:", error);
+    }
   };
 
   const pinConversation = (id) => {
@@ -135,7 +196,9 @@ export default function Chat() {
             prompt: `Create a 2-4 word title for this message: "${titleText}". Return ONLY the title words, no punctuation, no quotes, no explanation.`,
           });
           if (result) title = result.trim().slice(0, 50);
-        } catch {}
+        } catch {
+          // Ignore remote title generation errors and continue.
+        }
 
         conv = await base44.agents.createConversation({
           agent_name: "nexabot",
@@ -148,13 +211,32 @@ export default function Chat() {
 
       await base44.agents.addMessage(conv, { role: "user", content: text, file_urls: fileUrls });
     } catch (error) {
+      console.warn("Base44 send failed, attempting /api/chat fallback:", error);
+
+      try {
+        if (text?.trim() && !fileUrls?.length) {
+          const reply = await requestWebChatResponse(text);
+          if (reply) {
+            const assistantMsg = {
+              role: "assistant",
+              content: reply,
+              timestamp: new Date().toISOString(),
+            };
+            setMessages((prev) => [...prev, assistantMsg]);
+            return;
+          }
+        }
+      } catch (apiError) {
+        console.error("Fallback /api/chat request failed:", apiError);
+        error = apiError;
+      }
+
       const fallbackMsg = {
         role: "assistant",
         content: buildFallbackReply(text, fileUrls, error),
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, fallbackMsg]);
-      console.error("Failed to send message to backend:", error);
     } finally {
       setIsLoading(false);
     }
@@ -176,7 +258,6 @@ export default function Chat() {
       />
 
       <div className="flex flex-col flex-1 overflow-hidden">
-        {/* Top bar */}
         <div className="flex items-center px-6 py-3 border-b border-white/10">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
@@ -184,7 +265,6 @@ export default function Chat() {
           </div>
         </div>
 
-        {/* Messages */}
         <div className="flex-1 overflow-y-auto px-4 py-6">
           <div className="max-w-5xl mx-auto">
             {messages.length === 0 ? (
@@ -238,8 +318,6 @@ export default function Chat() {
 
         <ChatInput onSend={sendMessage} isLoading={isLoading} />
       </div>
-
-
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { Send, Paperclip, Mic, MicOff, X, File, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { base44 } from "@/api/base44Client";
+import { uploadFile } from "@/lib/api";
 import ToolsPanel from "@/components/tools/ToolsPanel";
 
 export default function ChatInput({ onSend, isLoading }) {
@@ -35,7 +35,7 @@ export default function ChatInput({ onSend, isLoading }) {
     if (!files.length) return;
     setUploading(true);
     for (const file of files) {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await uploadFile(file);
       setAttachedFiles(prev => [...prev, { name: file.name, url: file_url }]);
     }
     setUploading(false);

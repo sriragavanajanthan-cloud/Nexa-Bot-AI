@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import { base44 } from "@/api/base44Client";
+import { sendChatMessage, invokeLLM, getApiKey } from "@/lib/api";
+import * as storage from "@/lib/storage";
 import Sidebar from "@/components/chat/Sidebar";
 import MessageBubble from "@/components/chat/MessageBubble";
 import ChatInput from "@/components/chat/ChatInput";
-import { Sparkles, Zap, Code, BookOpen } from "lucide-react";
+import ApiKeyModal from "@/components/settings/ApiKeyModal";
+import { Sparkles, Zap, Code, BookOpen, Settings } from "lucide-react";
 
 const SUGGESTED_PROMPTS = [
   { icon: Sparkles, text: "What can you help me with?" },
@@ -18,96 +20,99 @@ export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
-  const [agentConversation, setAgentConversation] = useState(null);
+  const [showApiKeyModal, setShowApiKeyModal] = useState(!getApiKey());
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    loadConversations();
+    setConversations(storage.getConversations());
   }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  useEffect(() => {
-    if (!currentConvId) return;
-    const unsub = base44.agents.subscribeToConversation(currentConvId, (data) => {
-      setMessages(data.messages || []);
-    });
-    return unsub;
-  }, [currentConvId]);
-
-  const loadConversations = async () => {
-    const convs = await base44.agents.listConversations({ agent_name: "nexabot" });
-    setConversations(convs || []);
-  };
-
-  const createNewConversation = async () => {
-    const conv = await base44.agents.createConversation({
-      agent_name: "nexabot",
-      metadata: { name: "New Chat" },
-    });
-    setAgentConversation(conv);
+  const createNewConversation = () => {
+    const conv = storage.createConversation("New Chat");
+    setConversations(storage.getConversations());
     setCurrentConvId(conv.id);
     setMessages([]);
-    setConversations((prev) => [conv, ...prev]);
   };
 
-  const selectConversation = async (id) => {
-    const conv = await base44.agents.getConversation(id);
-    setAgentConversation(conv);
+  const selectConversation = (id) => {
+    const conv = storage.getConversation(id);
+    if (!conv) return;
     setCurrentConvId(id);
     setMessages(conv.messages || []);
   };
 
-  const deleteConversation = async (id) => {
-    setConversations((prev) => prev.filter((c) => c.id !== id));
+  const deleteConversation = (id) => {
+    storage.deleteConversation(id);
+    setConversations(storage.getConversations());
     if (currentConvId === id) {
       setCurrentConvId(null);
       setMessages([]);
-      setAgentConversation(null);
     }
   };
 
-  const renameConversation = async (id, newName) => {
-    await base44.agents.updateConversation(id, { metadata: { name: newName } });
-    setConversations((prev) => prev.map((c) => c.id === id ? { ...c, metadata: { ...c.metadata, name: newName } } : c));
+  const renameConversation = (id, newName) => {
+    storage.updateConversation(id, { metadata: { name: newName } });
+    setConversations(storage.getConversations());
   };
 
   const pinConversation = (id) => {
-    setConversations((prev) => prev.map((c) => c.id === id ? { ...c, pinned: !c.pinned } : c));
+    const conv = storage.getConversation(id);
+    if (conv) {
+      storage.updateConversation(id, { pinned: !conv.pinned });
+      setConversations(storage.getConversations());
+    }
   };
 
   const archiveConversation = (id) => {
-    setConversations((prev) => prev.map((c) => c.id === id ? { ...c, archived: !c.archived } : c));
+    const conv = storage.getConversation(id);
+    if (conv) {
+      storage.updateConversation(id, { archived: !conv.archived });
+      setConversations(storage.getConversations());
+    }
   };
 
   const sendMessage = async (text, fileUrls) => {
-    let conv = agentConversation;
-    const titleText = text || "Shared a file";
-    if (!conv) {
-      let title = titleText.slice(0, 40);
+    if (!getApiKey()) {
+      setShowApiKeyModal(true);
+      return;
+    }
+
+    let convId = currentConvId;
+
+    if (!convId) {
+      let title = (text || "New Chat").slice(0, 40);
       try {
-        const result = await base44.integrations.Core.InvokeLLM({
-          prompt: `Create a 2-4 word title for this message: "${titleText}". Return ONLY the title words, no punctuation, no quotes, no explanation.`,
+        const result = await invokeLLM({
+          prompt: `Create a 2-4 word title for this message: "${text}". Return ONLY the title words, no punctuation, no quotes.`,
         });
         if (result) title = result.trim().slice(0, 50);
       } catch {}
-      conv = await base44.agents.createConversation({
-        agent_name: "nexabot",
-        metadata: { name: title },
-      });
-      setAgentConversation(conv);
-      setCurrentConvId(conv.id);
-      setConversations((prev) => [conv, ...prev]);
+      const conv = storage.createConversation(title);
+      convId = conv.id;
+      setCurrentConvId(convId);
+      setConversations(storage.getConversations());
     }
 
     const userMsg = { role: "user", content: text, file_urls: fileUrls, timestamp: new Date().toISOString() };
-    setMessages((prev) => [...prev, userMsg]);
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
+    storage.addMessageToConversation(convId, userMsg);
     setIsLoading(true);
 
-    await base44.agents.addMessage(conv, { role: "user", content: text, file_urls: fileUrls });
+    try {
+      const responseText = await sendChatMessage(updatedMessages);
+      const assistantMsg = { role: "assistant", content: responseText, timestamp: new Date().toISOString() };
+      setMessages([...updatedMessages, assistantMsg]);
+      storage.addMessageToConversation(convId, assistantMsg);
+    } catch (err) {
+      const errMsg = { role: "assistant", content: `**Error:** ${err.message}`, timestamp: new Date().toISOString() };
+      setMessages([...updatedMessages, errMsg]);
+    }
+
     setIsLoading(false);
   };
 
@@ -123,16 +128,23 @@ export default function Chat() {
         onPin={pinConversation}
         onArchive={archiveConversation}
         collapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed((v) => !v)}
+        onToggle={() => setSidebarCollapsed(v => !v)}
       />
 
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Top bar */}
-        <div className="flex items-center px-6 py-3 border-b border-white/10">
+        <div className="flex items-center justify-between px-6 py-3 border-b border-white/10">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
             <span className="text-white/60 text-sm">NEXAbot.AI</span>
           </div>
+          <button
+            onClick={() => setShowApiKeyModal(true)}
+            className="text-white/30 hover:text-white/70 transition-colors"
+            title="API Key Settings"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
         </div>
 
         {/* Messages */}
@@ -190,7 +202,7 @@ export default function Chat() {
         <ChatInput onSend={sendMessage} isLoading={isLoading} />
       </div>
 
-
+      {showApiKeyModal && <ApiKeyModal onClose={() => setShowApiKeyModal(false)} />}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { generateImage, uploadFile } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Upload, Wand2, Download, ImageIcon } from "lucide-react";
@@ -15,7 +15,7 @@ export default function ImageEditor() {
     const file = e.target.files[0];
     if (!file) return;
     setUploading(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    const { file_url } = await uploadFile(file);
     setUploadedUrl(file_url);
     setResultUrl(null);
     setUploading(false);
@@ -24,10 +24,7 @@ export default function ImageEditor() {
   const editImage = async () => {
     if (!uploadedUrl || !instruction.trim()) return;
     setLoading(true);
-    const result = await base44.integrations.Core.GenerateImage({
-      prompt: instruction,
-      existing_image_urls: [uploadedUrl],
-    });
+    const result = await generateImage({ prompt: instruction, existing_image_urls: [uploadedUrl] });
     setResultUrl(result?.url || null);
     setLoading(false);
   };

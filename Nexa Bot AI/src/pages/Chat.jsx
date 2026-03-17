@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { sendChatMessage, invokeLLM, getApiKey } from "@/lib/api";
+import { sendChatMessage, invokeLLM } from "@/lib/api";
 import * as storage from "@/lib/storage";
 import Sidebar from "@/components/chat/Sidebar";
 import MessageBubble from "@/components/chat/MessageBubble";
 import ChatInput from "@/components/chat/ChatInput";
-import ApiKeyModal from "@/components/settings/ApiKeyModal";
-import { Sparkles, Zap, Code, BookOpen, Settings } from "lucide-react";
+import { Sparkles, Zap, Code, BookOpen } from "lucide-react";
 
 const SUGGESTED_PROMPTS = [
   { icon: Sparkles, text: "What can you help me with?" },
@@ -20,7 +19,7 @@ export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [showApiKeyModal, setShowApiKeyModal] = useState(!getApiKey());
+  
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -76,11 +75,6 @@ export default function Chat() {
   };
 
   const sendMessage = async (text, fileUrls) => {
-    if (!getApiKey()) {
-      setShowApiKeyModal(true);
-      return;
-    }
-
     let convId = currentConvId;
 
     if (!convId) {
@@ -133,18 +127,11 @@ export default function Chat() {
 
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Top bar */}
-        <div className="flex items-center justify-between px-6 py-3 border-b border-white/10">
+        <div className="flex items-center px-6 py-3 border-b border-white/10">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
             <span className="text-white/60 text-sm">NEXAbot.AI</span>
           </div>
-          <button
-            onClick={() => setShowApiKeyModal(true)}
-            className="text-white/30 hover:text-white/70 transition-colors"
-            title="API Key Settings"
-          >
-            <Settings className="w-4 h-4" />
-          </button>
         </div>
 
         {/* Messages */}
@@ -202,7 +189,6 @@ export default function Chat() {
         <ChatInput onSend={sendMessage} isLoading={isLoading} />
       </div>
 
-      {showApiKeyModal && <ApiKeyModal onClose={() => setShowApiKeyModal(false)} />}
     </div>
   );
 }

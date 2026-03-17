@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { generateImage } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageIcon, Download, Sparkles } from "lucide-react";
@@ -13,7 +13,7 @@ export default function ImageVideoGenerator() {
     if (!prompt.trim()) return;
     setLoading(true);
     setImageUrl(null);
-    const result = await base44.integrations.Core.GenerateImage({ prompt });
+    const result = await generateImage({ prompt });
     setImageUrl(result?.url || null);
     setLoading(false);
   };

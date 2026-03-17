@@ -6,7 +6,7 @@ module.exports = async function handler(req, res) {
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    res.status(500).json({ error: "OPENAI_API_KEY is not configured on the server" });
+    res.status(500).json({ error: "AI backend is not configured" });
     return;
   }
 
@@ -42,8 +42,10 @@ module.exports = async function handler(req, res) {
     const data = await openAiResponse.json();
 
     if (!openAiResponse.ok) {
-      const errorMessage = data?.error?.message || "OpenAI request failed";
-      res.status(openAiResponse.status).json({ error: errorMessage });
+      const errorMessage = data?.error?.message || "AI provider request failed";
+      const isAuthIssue = /api key|invalid_api_key|authentication/i.test(errorMessage);
+      const safeError = isAuthIssue ? "AI backend authentication failed" : errorMessage;
+      res.status(openAiResponse.status).json({ error: safeError });
       return;
     }
 

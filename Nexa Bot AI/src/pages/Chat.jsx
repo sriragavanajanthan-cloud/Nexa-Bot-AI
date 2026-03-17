@@ -27,7 +27,7 @@ const requestWebChatResponse = async (text) => {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data?.error || `Chat API request failed with status ${response.status}`);
+    throw new Error(`Chat API request failed with status ${response.status}`);
   }
 
   return data?.reply;
@@ -41,7 +41,7 @@ const buildFallbackReply = (text, fileUrls, error) => {
   }
 
   if (errorMessage.includes("invalid_api_key") || errorMessage.includes("incorrect api key")) {
-    return "I can't respond right now because the OpenAI API key appears to be invalid. Please verify the key in your backend/project settings and try again.";
+    return "I can't respond right now because the AI backend authentication failed. Please try again later.";
   }
 
   if (fileUrls?.length) {

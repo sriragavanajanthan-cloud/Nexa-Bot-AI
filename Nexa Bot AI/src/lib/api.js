@@ -1,35 +1,90 @@
-import { base44 } from "@/api/base44Client";
+const OPENAI_API_URL = "https://api.openai.com/v1";
 
 export const NEXABOT_SYSTEM_PROMPT = `You are NEXAbot.AI, a versatile and intelligent AI assistant.
 You help users with coding, analysis, writing, research, math, and any other tasks.
 You provide clear, accurate, and helpful responses formatted in markdown.
 When writing code, always use proper syntax highlighting with language tags.`;
 
+export function getApiKey() {
+  return import.meta.env.VITE_OPENAI_API_KEY || "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";
+}
+
+export function signOut() {
+  localStorage.removeItem("nexabot_user_email");
+  window.location.reload();
+}
+
 export async function sendChatMessage(messages) {
-  const history = messages.map(m => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`).join("\n");
-  const result = await base44.integrations.Core.InvokeLLM({
-    prompt: `${NEXABOT_SYSTEM_PROMPT}\n\nConversation:\n${history}\n\nRespond as the Assistant:`,
+  const key = getApiKey();
+  if (!key) throw new Error("No API key set");
+
+  const response = await fetch(`${OPENAI_API_URL}/chat/completions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: NEXABOT_SYSTEM_PROMPT },
+        ...messages.map(m => ({ role: m.role, content: m.content }))
+      ]
+    })
   });
-  return result;
+
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error?.message || "API request failed");
+  }
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || "";
 }
 
 export async function invokeLLM({ prompt, responseJsonSchema }) {
-  const result = await base44.integrations.Core.InvokeLLM({
-    prompt,
-    response_json_schema: responseJsonSchema || undefined,
+  const key = getApiKey();
+  if (!key) throw new Error("No API key set");
+
+  const body = {
+    model: "gpt-4o-mini",
+    messages: [{ role: "user", content: prompt }],
+    ...(responseJsonSchema ? { response_format: { type: "json_object" } } : {})
+  };
+
+  const response = await fetch(`${OPENAI_API_URL}/chat/completions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
+    body: JSON.stringify(body)
   });
-  return result;
+
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error?.message || "API request failed");
+  }
+
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content || "";
+  return responseJsonSchema ? JSON.parse(content) : content;
 }
 
 export async function generateImage({ prompt, existing_image_urls }) {
-  const result = await base44.integrations.Core.GenerateImage({
-    prompt,
-    existing_image_urls: existing_image_urls || undefined,
+  const key = getApiKey();
+  if (!key) throw new Error("No API key set");
+
+  const response = await fetch(`${OPENAI_API_URL}/images/generations`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
+    body: JSON.stringify({ model: "dall-e-3", prompt, n: 1, size: "1024x1024" })
   });
-  return { url: result.url };
+
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error?.message || "Image generation failed");
+  }
+
+  const data = await response.json();
+  return { url: data.data?.[0]?.url };
 }
 
 export async function uploadFile(file) {
-  const result = await base44.integrations.Core.UploadFile({ file });
-  return { file_url: result.file_url };
+  const url = URL.createObjectURL(file);
+  return Promise.resolve({ file_url: url });
 }

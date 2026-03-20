@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import { sendChatMessage, invokeLLM } from "@/lib/api";
+import { sendChatMessage, invokeLLM, signOut } from "@/lib/api";
 import * as storage from "@/lib/storage";
 import Sidebar from "@/components/chat/Sidebar";
 import MessageBubble from "@/components/chat/MessageBubble";
 import ChatInput from "@/components/chat/ChatInput";
-import { Sparkles, Zap, Code, BookOpen } from "lucide-react";
+import AuthGate from "@/components/AuthGate";
+import { Sparkles, Zap, Code, BookOpen, LogOut } from "lucide-react";
 
 const SUGGESTED_PROMPTS = [
   { icon: Sparkles, text: "What can you help me with?" },
@@ -111,7 +112,8 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex h-screen bg-[#111111] text-white overflow-hidden">
+    <AuthGate>
+      <div className="flex h-screen bg-[#111111] text-white overflow-hidden">
       <Sidebar
         conversations={conversations}
         currentId={currentConvId}
@@ -127,11 +129,15 @@ export default function Chat() {
 
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Top bar */}
-        <div className="flex items-center px-6 py-3 border-b border-white/10">
+        <div className="flex items-center justify-between px-6 py-3 border-b border-white/10">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
             <span className="text-white/60 text-sm">NEXAbot.AI</span>
           </div>
+          <button onClick={signOut} className="flex items-center gap-1.5 text-white/30 hover:text-white/70 text-xs transition-colors">
+            <LogOut className="w-3.5 h-3.5" />
+            Sign out
+          </button>
         </div>
 
         {/* Messages */}
@@ -189,6 +195,7 @@ export default function Chat() {
         <ChatInput onSend={sendMessage} isLoading={isLoading} />
       </div>
 
-    </div>
+      </div>
+    </AuthGate>
   );
 }

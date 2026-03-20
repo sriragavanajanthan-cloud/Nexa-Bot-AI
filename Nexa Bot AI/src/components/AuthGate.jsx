@@ -4,6 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Mail, ShieldCheck, ArrowLeft, RefreshCw } from "lucide-react";
 import emailjs from "@emailjs/browser";
 
+console.log('--- EmailJS Debug ---');
+console.log('Service ID:', import.meta.env.VITE_EMAILJS_SERVICE_ID);
+console.log('Template ID:', import.meta.env.VITE_EMAILJS_TEMPLATE_ID);
+console.log('Public Key:', import.meta.env.VITE_EMAILJS_PUBLIC_KEY);
+console.log('---------------------');
+
+
 const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
 const TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
 const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
@@ -188,3 +195,4 @@ export default function AuthGate({ children }) {
     </div>
   );
 }
+

@@ -76,10 +76,18 @@ export default function AuthGate({ children }) {
       return;
     }
     const trimmed = inputEmail.trim().toLowerCase();
+    const previousEmail = localStorage.getItem("nexabot_user_email");
+    
     localStorage.setItem("nexabot_user_email", trimmed);
     setEmail(trimmed);
+    
+    // Force page reload to load new user's chat history
+    // This ensures the ChatContext reloads with the new user's data
+    if (previousEmail && previousEmail !== trimmed) {
+      // If switching users, reload the page to reset all state
+      window.location.reload();
+    }
   };
-
   const resend = async () => {
     if (resendCooldown > 0 || sending) return;
     setCode("");

@@ -6,6 +6,7 @@ import PageNotFound from './lib/PageNotFound';
 import Chat from "./pages/Chat";
 import AuthGate from './components/AuthGate';
 import { ChatProvider } from './context/ChatContext';
+// FIX: Correct the import path - add the .jsx extension or ensure the path is correct
 import ChatInterface from './components/chat/ChatInterface';
 
 function App() {

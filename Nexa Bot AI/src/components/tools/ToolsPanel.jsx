@@ -1,17 +1,18 @@
 import { useState } from "react";
-import { MessageSquare, Brain, Languages, ImageIcon, Wand2, BarChart2, Zap, X, ChevronRight } from "lucide-react";
+import { MessageSquare, Brain, ScanSearch, ImageIcon, Wand2, BarChart2, Zap, X, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import MemoryBank from "./MemoryBank";
-import LanguageTranslator from "./LanguageTranslator";
+import AIDetector from "./AIDetector";
 import ImageVideoGenerator from "./ImageVideoGenerator";
 import ImageEditor from "./ImageEditor";
 import GraphingTool from "./GraphingTool";
 import ImageAmplifier from "./ImageAmplifier";
 
+// Removed "translate" from TOOLS array
 const TOOLS = [
   { id: "memory", label: "Memory Bank", icon: Brain, color: "text-red-400" },
-  { id: "translate", label: "Translator", icon: Languages, color: "text-orange-400" },
+  { id: "aidetect", label: "AI Detector", icon: ScanSearch, color: "text-orange-400" },
   { id: "imagegen", label: "Image Generator", icon: ImageIcon, color: "text-yellow-400" },
   { id: "imageedit", label: "Image Editor", icon: Wand2, color: "text-green-400" },
   { id: "graph", label: "Graphing", icon: BarChart2, color: "text-blue-400" },
@@ -20,7 +21,7 @@ const TOOLS = [
 
 const TOOL_COMPONENTS = {
   memory: MemoryBank,
-  translate: LanguageTranslator,
+  aidetect: AIDetector,
   imagegen: ImageVideoGenerator,
   imageedit: ImageEditor,
   graph: GraphingTool,

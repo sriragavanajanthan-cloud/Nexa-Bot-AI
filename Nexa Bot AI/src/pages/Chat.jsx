@@ -1,201 +1,122 @@
-import { useState, useEffect, useRef } from "react";
-import { sendChatMessage, invokeLLM, signOut } from "@/lib/api";
-import * as storage from "@/lib/storage";
-import Sidebar from "@/components/chat/Sidebar";
-import MessageBubble from "@/components/chat/MessageBubble";
-import ChatInput from "@/components/chat/ChatInput";
-import AuthGate from "@/components/AuthGate";
-import { Sparkles, Zap, Code, BookOpen, LogOut } from "lucide-react";
+// ============================================
+// DIY ENGINE CONFIGURATION
+// ============================================
+// Change these values to match your DIY engine
+const DIY_ENGINE_URL = import.meta.env.VITE_DIY_ENGINE_URL || "http://localhost:5000";
+const DIY_ENGINE_CHAT_ENDPOINT = import.meta.env.VITE_DIY_ENGINE_CHAT_ENDPOINT || "/chat";
+const DIY_ENGINE_GENERATE_ENDPOINT = import.meta.env.VITE_DIY_ENGINE_GENERATE_ENDPOINT || "/generate";
 
-const SUGGESTED_PROMPTS = [
-  { icon: Sparkles, text: "What can you help me with?" },
-  { icon: Zap, text: "Write a Python script to sort a list" },
-  { icon: Code, text: "Explain how neural networks work" },
-  { icon: BookOpen, text: "Summarize the latest AI trends" },
-];
+export const NEXABOT_SYSTEM_PROMPT = `You are NEXAbot.AI, a versatile and intelligent AI assistant.
+You help users with coding, analysis, writing, research, math, and any other tasks.
+You provide clear, accurate, and helpful responses formatted in markdown.
+When writing code, always use proper syntax highlighting with language tags.`;
 
-export default function Chat() {
-  const [conversations, setConversations] = useState([]);
-  const [currentConvId, setCurrentConvId] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+// No API key needed for DIY engine
+export function getApiKey() {
+  return null;
+}
+
+export function signOut() {
+  localStorage.removeItem("nexabot_user_email");
+  window.location.reload();
+}
+
+// Main chat function - sends message to DIY engine
+export async function sendChatMessage(messages) {
+  try {
+    // Get the last user message
+    const lastUserMessage = messages.filter(m => m.role === "user").pop();
+    const prompt = lastUserMessage?.content || "";
+    
+    // Add system prompt and conversation context
+    const conversationContext = messages.slice(-10).map(m => 
+      `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`
+    ).join("\n");
+    
+    const fullPrompt = `${NEXABOT_SYSTEM_PROMPT}\n\nConversation history:\n${conversationContext}\n\nUser: ${prompt}\n\nAssistant:`;
+
+    const response = await fetch(`${DIY_ENGINE_URL}${DIY_ENGINE_CHAT_ENDPOINT}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        prompt: fullPrompt,
+        max_tokens: 1000,
+        temperature: 0.7,
+        stream: false
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`DIY Engine error (${response.status}): ${errorText}`);
+    }
+
+    const data = await response.json();
+    
+    // Try different response formats (adjust based on your engine)
+    return data.response || data.text || data.output || data.content || data.message || "";
+    
+  } catch (error) {
+    console.error("DIY Engine connection failed:", error);
+    throw new Error(`Cannot connect to DIY engine at ${DIY_ENGINE_URL}. Make sure it's running!`);
+  }
+}
+
+// For generating titles and other LLM calls
+export async function invokeLLM({ prompt, responseJsonSchema }) {
+  try {
+    const response = await fetch(`${DIY_ENGINE_URL}${DIY_ENGINE_GENERATE_ENDPOINT}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        prompt: prompt,
+        max_tokens: 100,
+        temperature: 0.5,
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`DIY Engine error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const content = data.response || data.text || data.output || data.content || "";
+    
+    return responseJsonSchema ? JSON.parse(content) : content;
+    
+  } catch (error) {
+    console.error("DIY Engine invokeLLM failed:", error);
+    // Fallback: return a simple title based on prompt
+    if (prompt.includes("title")) {
+      return "New Chat";
+    }
+    throw new Error("Failed to get response from DIY engine");
+  }
+}
+
+// Image generation (if your engine supports it)
+export async function generateImage({ prompt, existing_image_urls }) {
+  try {
+    const response = await fetch(`${DIY_ENGINE_URL}/image`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt })
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      return { url: data.url || data.image_url };
+    }
+  } catch (error) {
+    console.warn("DIY image generation not available");
+  }
   
-  const messagesEndRef = useRef(null);
+  // Return placeholder
+  return { url: "https://via.placeholder.com/1024x1024?text=DIY+Engine" };
+}
 
-  useEffect(() => {
-    setConversations(storage.getConversations());
-  }, []);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const createNewConversation = () => {
-    const conv = storage.createConversation("New Chat");
-    setConversations(storage.getConversations());
-    setCurrentConvId(conv.id);
-    setMessages([]);
-  };
-
-  const selectConversation = (id) => {
-    const conv = storage.getConversation(id);
-    if (!conv) return;
-    setCurrentConvId(id);
-    setMessages(conv.messages || []);
-  };
-
-  const deleteConversation = (id) => {
-    storage.deleteConversation(id);
-    setConversations(storage.getConversations());
-    if (currentConvId === id) {
-      setCurrentConvId(null);
-      setMessages([]);
-    }
-  };
-
-  const renameConversation = (id, newName) => {
-    storage.updateConversation(id, { metadata: { name: newName } });
-    setConversations(storage.getConversations());
-  };
-
-  const pinConversation = (id) => {
-    const conv = storage.getConversation(id);
-    if (conv) {
-      storage.updateConversation(id, { pinned: !conv.pinned });
-      setConversations(storage.getConversations());
-    }
-  };
-
-  const archiveConversation = (id) => {
-    const conv = storage.getConversation(id);
-    if (conv) {
-      storage.updateConversation(id, { archived: !conv.archived });
-      setConversations(storage.getConversations());
-    }
-  };
-
-  const sendMessage = async (text, fileUrls) => {
-    let convId = currentConvId;
-
-    if (!convId) {
-      let title = (text || "New Chat").slice(0, 40);
-      try {
-        const result = await invokeLLM({
-          prompt: `Create a 2-4 word title for this message: "${text}". Return ONLY the title words, no punctuation, no quotes.`,
-        });
-        if (result) title = result.trim().slice(0, 50);
-      } catch {}
-      const conv = storage.createConversation(title);
-      convId = conv.id;
-      setCurrentConvId(convId);
-      setConversations(storage.getConversations());
-    }
-
-    const userMsg = { role: "user", content: text, file_urls: fileUrls, timestamp: new Date().toISOString() };
-    const updatedMessages = [...messages, userMsg];
-    setMessages(updatedMessages);
-    storage.addMessageToConversation(convId, userMsg);
-    setIsLoading(true);
-
-    try {
-      const responseText = await sendChatMessage(updatedMessages);
-      const assistantMsg = { role: "assistant", content: responseText, timestamp: new Date().toISOString() };
-      setMessages([...updatedMessages, assistantMsg]);
-      storage.addMessageToConversation(convId, assistantMsg);
-    } catch (err) {
-      const errMsg = { role: "assistant", content: `**Error:** ${err.message}`, timestamp: new Date().toISOString() };
-      setMessages([...updatedMessages, errMsg]);
-    }
-
-    setIsLoading(false);
-  };
-
-  return (
-    <AuthGate>
-      <div className="flex h-screen bg-[#111111] text-white overflow-hidden">
-      <Sidebar
-        conversations={conversations}
-        currentId={currentConvId}
-        onSelect={selectConversation}
-        onCreate={createNewConversation}
-        onDelete={deleteConversation}
-        onRename={renameConversation}
-        onPin={pinConversation}
-        onArchive={archiveConversation}
-        collapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed(v => !v)}
-      />
-
-      <div className="flex flex-col flex-1 overflow-hidden">
-        {/* Top bar */}
-        <div className="flex items-center justify-between px-6 py-3 border-b border-white/10">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-white/60 text-sm">NEXAbot.AI</span>
-          </div>
-          <button onClick={signOut} className="flex items-center gap-1.5 text-white/30 hover:text-white/70 text-xs transition-colors">
-            <LogOut className="w-3.5 h-3.5" />
-            Sign out
-          </button>
-        </div>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 py-6">
-          <div className="max-w-5xl mx-auto">
-            {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full min-h-[60vh] text-center">
-                <img
-                  src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/926442f73_NEXAbotAI.png"
-                  alt="NEXAbot.AI"
-                  className="w-20 h-20 rounded-full mb-4"
-                />
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-green-400 bg-clip-text text-transparent mb-2">
-                  NEXAbot.AI
-                </h1>
-                <p className="text-white/50 mb-8">Your intelligent AI assistant. How can I help you today?</p>
-                <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
-                  {SUGGESTED_PROMPTS.map(({ icon: Icon, text }) => (
-                    <button
-                      key={text}
-                      onClick={() => sendMessage(text)}
-                      className="flex items-center gap-2 p-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-left text-sm text-white/70 transition-colors"
-                    >
-                      <Icon className="w-4 h-4 text-cyan-400 shrink-0" />
-                      <span>{text}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <>
-                {messages.map((msg, i) => (
-                  <MessageBubble key={i} message={msg} />
-                ))}
-                {isLoading && (
-                  <div className="flex gap-3 mb-4">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-green-400 flex items-center justify-center shrink-0">
-                      <span className="text-black text-xs font-bold">N</span>
-                    </div>
-                    <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl px-4 py-3">
-                      <div className="flex gap-1">
-                        <div className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "0ms" }} />
-                        <div className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "150ms" }} />
-                        <div className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "300ms" }} />
-                      </div>
-                    </div>
-                  </div>
-                )}
-                <div ref={messagesEndRef} />
-              </>
-            )}
-          </div>
-        </div>
-
-        <ChatInput onSend={sendMessage} isLoading={isLoading} />
-      </div>
-
-      </div>
-    </AuthGate>
-  );
+// File upload (local)
+export async function uploadFile(file) {
+  const url = URL.createObjectURL(file);
+  return Promise.resolve({ file_url: url });
 }

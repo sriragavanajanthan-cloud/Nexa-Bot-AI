@@ -279,10 +279,9 @@ export default function Chat() {
           </div>
         </div>
 
-        <ChatInput onSend={sendMessage} isLoading={isLoading} />
+                 <ChatInput onSend={sendMessage} isLoading={isLoading} />
+        </div>
       </div>
-    </div>
-  </AuthGate>
-);
-  }
+    </AuthGate>
+  );
 }

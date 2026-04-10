@@ -137,11 +137,11 @@ export default function Chat() {
           bg-[#1a1a1a]
           ${sidebarCollapsed && !mobileMenuOpen 
             ? 'lg:w-0 lg:opacity-0 lg:overflow-hidden' 
-            : 'w-72'
+            : 'w-64'
           }
           ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}>
-          <div className="h-full w-72">
+          <div className="h-full w-64">
             {/* Close button on mobile */}
             <div className="lg:hidden flex justify-end p-2">
               <button

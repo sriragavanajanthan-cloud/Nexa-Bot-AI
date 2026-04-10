@@ -126,26 +126,32 @@ export default function Chat() {
         >
           ☰
         </button>
-
-        {/* Sidebar wrapper with slide animation */}
-        <div className={`
-          fixed inset-y-0 left-0 z-50 transform transition-transform duration-300
-          lg:relative lg:transform-none
-          ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        `}>
-          <Sidebar
-            conversations={conversations}
-            currentId={currentConvId}
-            onSelect={selectConversation}
-            onCreate={createNewConversation}
-            onDelete={deleteConversation}
-            onRename={renameConversation}
-            onPin={pinConversation}
-            onArchive={archiveConversation}
-            collapsed={sidebarCollapsed}
-            onToggle={() => setSidebarCollapsed(v => !v)}
-          />
-        </div>
+        
+       {/* Sidebar - collapses completely when sidebarCollapsed is true */}
+<div className={`
+  fixed lg:relative inset-y-0 left-0 z-50
+  transition-all duration-300 ease-in-out
+  ${sidebarCollapsed 
+    ? 'w-0 opacity-0 overflow-hidden' 
+    : 'w-72 opacity-100'
+  }
+  ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+`}>
+  <div className="h-full w-72">
+    <Sidebar
+      conversations={conversations}
+      currentId={currentConvId}
+      onSelect={selectConversation}
+      onCreate={createNewConversation}
+      onDelete={deleteConversation}
+      onRename={renameConversation}
+      onPin={pinConversation}
+      onArchive={archiveConversation}
+      collapsed={sidebarCollapsed}
+      onToggle={() => setSidebarCollapsed(v => !v)}
+    />
+  </div>
+</div>
 
         {/* Overlay to close sidebar */}
         {mobileMenuOpen && (

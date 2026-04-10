@@ -162,8 +162,7 @@ export default function Chat() {
         )}
 
         {/* Main Chat Area */}
-        <div className="flex flex-col flex-1 overflow-hidden">
-          
+<div className={`flex flex-col flex-1 overflow-hidden transition-all duration-300 ${sidebarCollapsed ? 'ml-0' : 'lg:ml-0'}`}>          
           {/* Top bar - Desktop */}
           <div className="hidden lg:flex items-center justify-between px-6 py-3 border-b border-white/10">
             <button 

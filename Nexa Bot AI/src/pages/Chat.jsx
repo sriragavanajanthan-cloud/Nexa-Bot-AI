@@ -5,7 +5,7 @@ import Sidebar from "@/components/chat/Sidebar";
 import MessageBubble from "@/components/chat/MessageBubble";
 import ChatInput from "@/components/chat/ChatInput";
 import AuthGate from "@/components/AuthGate";
-import { Sparkles, Zap, Code, BookOpen, LogOut, Menu, X } from "lucide-react";
+
 
 const SUGGESTED_PROMPTS = [
   { icon: Sparkles, text: "What can you help me with?" },

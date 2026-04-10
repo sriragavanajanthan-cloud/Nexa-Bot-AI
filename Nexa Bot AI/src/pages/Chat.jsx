@@ -5,8 +5,7 @@ import Sidebar from "@/components/chat/Sidebar";
 import MessageBubble from "@/components/chat/MessageBubble";
 import ChatInput from "@/components/chat/ChatInput";
 import AuthGate from "@/components/AuthGate";
-import { Sparkles, Zap, Code, BookOpen, LogOut, Menu, X } from "lucide-react";
-
+import { Sparkles, Zap, Code, BookOpen, LogOut } from "lucide-react";
 
 const SUGGESTED_PROMPTS = [
   { icon: Sparkles, text: "What can you help me with?" },
@@ -120,59 +119,35 @@ export default function Chat() {
     <AuthGate>
       <div className="flex h-screen bg-[#111111] text-white overflow-hidden">
       
-        {/* Mobile menu button - only shows on mobile when sidebar is hidden */}
-        {!mobileMenuOpen && (
-          <button
-            onClick={() => setMobileMenuOpen(true)}
-            className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-[#1a1a1a] border border-white/10 rounded-lg text-white/70 hover:text-white transition-colors"
-          >
-            <Menu className="w-4 h-4" />
-          </button>
-        )}
+        {/* Mobile menu button */}
+        <button
+          onClick={() => setMobileMenuOpen(true)}
+          className="lg:hidden fixed top-4 left-4 z-50 p-1 bg-[#1a1a1a] border border-white/10 rounded-lg text-white/70"
+        >
+          ☰
+        </button>
 
-        {/* Sidebar - Desktop: collapses with sidebarCollapsed, Mobile: slides with mobileMenuOpen */}
+        {/* Sidebar wrapper with slide animation */}
         <div className={`
-          fixed lg:relative inset-y-0 left-0 z-50
-          transition-all duration-300 ease-in-out
-          bg-[#1a1a1a]
-          ${sidebarCollapsed && !mobileMenuOpen 
-            ? 'lg:w-0 lg:opacity-0 lg:overflow-hidden' 
-            : 'w-64'
-          }
+          fixed inset-y-0 left-0 z-50 transform transition-transform duration-300
+          lg:relative lg:transform-none
           ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}>
-          <div className="h-full w-64">
-            {/* Close button on mobile */}
-            <div className="lg:hidden flex justify-end p-2">
-              <button
-                onClick={() => setMobileMenuOpen(false)}
-                className="p-2 text-white/50 hover:text-white"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <Sidebar
-              conversations={conversations}
-              currentId={currentConvId}
-              onSelect={(id) => {
-                selectConversation(id);
-                setMobileMenuOpen(false);
-              }}
-              onCreate={() => {
-                createNewConversation();
-                setMobileMenuOpen(false);
-              }}
-              onDelete={deleteConversation}
-              onRename={renameConversation}
-              onPin={pinConversation}
-              onArchive={archiveConversation}
-              collapsed={sidebarCollapsed}
-              onToggle={() => setSidebarCollapsed(v => !v)}
-            />
-          </div>
+          <Sidebar
+            conversations={conversations}
+            currentId={currentConvId}
+            onSelect={selectConversation}
+            onCreate={createNewConversation}
+            onDelete={deleteConversation}
+            onRename={renameConversation}
+            onPin={pinConversation}
+            onArchive={archiveConversation}
+            collapsed={sidebarCollapsed}
+            onToggle={() => setSidebarCollapsed(v => !v)}
+          />
         </div>
 
-        {/* Overlay to close sidebar on mobile */}
+        {/* Overlay to close sidebar */}
         {mobileMenuOpen && (
           <div 
             className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -181,41 +156,33 @@ export default function Chat() {
         )}
 
         {/* Main Chat Area */}
-        <div className="flex flex-col flex-1 overflow-hidden w-full">
+        <div className="flex flex-col flex-1 overflow-hidden">
           
           {/* Top bar - Desktop */}
           <div className="hidden lg:flex items-center justify-between px-6 py-3 border-b border-white/10">
             <button 
               onClick={() => setSidebarCollapsed(v => !v)}
-              className="text-white/50 hover:text-white/70 p-2 rounded-lg transition-colors"
-              title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              className="text-white/50 hover:text-white/70 p-1 rounded"
             >
-              <Menu className="w-4 h-4" />
+              ☰
             </button>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              <span className="text-white/60 text-sm font-medium">NEXAbot.AI</span>
+              <span className="text-white/60 text-sm">NEXAbot.AI</span>
             </div>
-            <button 
-              onClick={signOut} 
-              className="flex items-center gap-1.5 text-white/30 hover:text-white/70 text-xs transition-colors px-2 py-1 rounded hover:bg-white/5"
-            >
+            <button onClick={signOut} className="flex items-center gap-1.5 text-white/30 hover:text-white/70 text-xs transition-colors">
               <LogOut className="w-3.5 h-3.5" />
               Sign out
             </button>
           </div>
 
           {/* Top bar - Mobile */}
-          <div className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-white/10 bg-[#111111]">
-            <div className="w-8" />
-            <div className="flex items-center gap-2">
+          <div className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-white/10 bg-[#111111] pl-14">
+            <div className="flex items-center gap-2 mx-auto">
               <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              <span className="text-white/60 text-sm font-medium">NEXAbot.AI</span>
+              <span className="text-white/60 text-sm">NEXAbot.AI</span>
             </div>
-            <button 
-              onClick={signOut} 
-              className="text-white/30 hover:text-white/70 p-1 rounded"
-            >
+            <button onClick={signOut} className="text-white/30 hover:text-white/70">
               <LogOut className="w-4 h-4" />
             </button>
           </div>
@@ -230,7 +197,7 @@ export default function Chat() {
               WebkitOverflowScrolling: 'touch'
             }}
           >
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-5xl mx-auto">
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full min-h-[60vh] text-center">
                   <img
@@ -242,7 +209,7 @@ export default function Chat() {
                     NEXAbot.AI
                   </h1>
                   <p className="text-white/50 mb-8">Your intelligent AI assistant. How can I help you today?</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-lg">
+                  <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
                     {SUGGESTED_PROMPTS.map(({ icon: Icon, text }) => (
                       <button
                         key={text}

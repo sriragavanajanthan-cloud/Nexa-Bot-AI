@@ -284,3 +284,4 @@ export default function Chat() {
     </div>
   </AuthGate>
 );
+}

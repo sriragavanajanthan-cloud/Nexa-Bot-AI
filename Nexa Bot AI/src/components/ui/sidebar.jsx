@@ -155,7 +155,7 @@ const Sidebar = React.forwardRef((
     );
   }
 
- if (isMobile) {
+if (isMobile) {
   return (
     (<Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
       <SheetContent
@@ -168,7 +168,12 @@ const Sidebar = React.forwardRef((
           }
         }
         side={side}>
-        <div className="flex h-full w-full flex-col">{children}</div>
+        <div className="flex h-full w-full flex-col">
+          {/* This ensures children take full height */}
+          <div className="flex-1 overflow-hidden">
+            {children}
+          </div>
+        </div>
       </SheetContent>
     </Sheet>)
   );

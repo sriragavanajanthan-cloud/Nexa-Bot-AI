@@ -168,11 +168,8 @@ if (isMobile) {
           }
         }
         side={side}>
-        <div className="flex h-full w-full flex-col">
-          {/* This ensures children take full height */}
-          <div className="flex-1 overflow-hidden">
-            {children}
-          </div>
+        <div className="flex flex-col h-full w-full">
+          {children}
         </div>
       </SheetContent>
     </Sheet>)

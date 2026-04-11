@@ -131,26 +131,37 @@ export default function Chat() {
         )}
 
         {/* Sidebar - Desktop: collapses with sidebarCollapsed, Mobile: slides with mobileMenuOpen */}
-        <div className={`
-          fixed lg:relative inset-y-0 left-0 z-50
-          transition-all duration-300 ease-in-out
-          bg-[#1a1a1a]
-          ${sidebarCollapsed && !mobileMenuOpen 
-            ? 'lg:w-0 lg:opacity-0 lg:overflow-hidden' 
-            : 'w-64'
-          }
-          ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        `}>
-          <div className="h-full w-64">
-            {/* Close button on mobile */}
-            <div className="lg:hidden flex justify-end p-2">
-              <button
-                onClick={() => setMobileMenuOpen(false)}
-                className="p-2 text-white/50 hover:text-white"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+       <div className="flex flex-col h-full w-64">
+  {/* Close button on mobile */}
+  <div className="lg:hidden flex justify-end p-2 flex-shrink-0">
+    <button
+      onClick={() => setMobileMenuOpen(false)}
+      className="p-2 text-white/50 hover:text-white"
+    >
+      <X className="w-4 h-4" />
+    </button>
+  </div>
+  <div className="flex-1 overflow-y-auto">
+    <Sidebar
+      conversations={conversations}
+      currentId={currentConvId}
+      onSelect={(id) => {
+        selectConversation(id);
+        setMobileMenuOpen(false);
+      }}
+      onCreate={() => {
+        createNewConversation();
+        setMobileMenuOpen(false);
+      }}
+      onDelete={deleteConversation}
+      onRename={renameConversation}
+      onPin={pinConversation}
+      onArchive={archiveConversation}
+      collapsed={sidebarCollapsed}
+      onToggle={() => setSidebarCollapsed(v => !v)}
+    />
+  </div>
+</div>
             <Sidebar
               conversations={conversations}
               currentId={currentConvId}

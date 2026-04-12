@@ -120,16 +120,16 @@ export default function Chat() {
     <AuthGate>
       <div className="flex h-screen bg-[#111111] text-white overflow-hidden">
       
-        {/* Sidebar - Fully collapses to width 0 */}
+        {/* Sidebar - Desktop: collapses to width 0, Mobile: slides off-screen */}
         <div className={`
           fixed lg:relative inset-y-0 left-0 z-50 h-full
           transition-all duration-300 ease-in-out
           bg-[#1a1a1a]
           ${sidebarCollapsed && !mobileMenuOpen 
-            ? 'w-0 opacity-0 overflow-hidden' 
+            ? 'lg:w-0 lg:opacity-0 lg:overflow-hidden' 
             : 'w-64'
           }
-          ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
         `}>
           <div className="flex flex-col h-full w-64">
             <div className="flex-1 overflow-y-auto min-h-0">
@@ -163,7 +163,7 @@ export default function Chat() {
           />
         )}
 
-        {/* Main Chat Area - Expands to full width when sidebar is collapsed */}
+        {/* Main Chat Area */}
         <div className="flex flex-col flex-1 overflow-hidden w-full">
           
           {/* Top bar */}

@@ -5,7 +5,7 @@ import Sidebar from "@/components/chat/Sidebar";
 import MessageBubble from "@/components/chat/MessageBubble";
 import ChatInput from "@/components/chat/ChatInput";
 import AuthGate from "@/components/AuthGate";
-import { Sparkles, Zap, Code, BookOpen, LogOut } from "lucide-react";
+import { Sparkles, Zap, Code, BookOpen, LogOut, Menu } from "lucide-react";
 
 
 const SUGGESTED_PROMPTS = [
@@ -166,15 +166,28 @@ export default function Chat() {
         {/* Main Chat Area */}
         <div className="flex flex-col flex-1 overflow-hidden w-full">
           
-          {/* Top bar - Arrow button removed */}
-          <div className="flex items-center justify-center px-6 py-3 border-b border-white/10">
+          {/* Top bar - With hamburger button restored */}
+          <div className="flex items-center justify-between px-6 py-3 border-b border-white/10">
+            <button 
+              onClick={() => {
+                if (window.innerWidth < 1024) {
+                  setMobileMenuOpen(!mobileMenuOpen);
+                } else {
+                  setSidebarCollapsed(v => !v);
+                }
+              }}
+              className="text-white/50 hover:text-white/70 p-2 rounded-lg transition-colors"
+              title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              <Menu className="w-4 h-4" />
+            </button>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
               <span className="text-white/60 text-sm font-medium">NEXAbot.AI</span>
             </div>
             <button 
               onClick={signOut} 
-              className="absolute right-4 flex items-center gap-1.5 text-white/30 hover:text-white/70 text-xs transition-colors px-2 py-1 rounded hover:bg-white/5"
+              className="flex items-center gap-1.5 text-white/30 hover:text-white/70 text-xs transition-colors px-2 py-1 rounded hover:bg-white/5"
             >
               <LogOut className="w-3.5 h-3.5" />
               Sign out

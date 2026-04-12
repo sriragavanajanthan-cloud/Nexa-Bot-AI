@@ -130,9 +130,9 @@ export default function Chat() {
           </button>
         )}
 
-        {/* Sidebar - with debug borders */}
+        {/* Sidebar - with h-full to fill height */}
         <div className={`
-          fixed lg:relative inset-y-0 left-0 z-50
+          fixed lg:relative inset-y-0 left-0 z-50 h-full
           transition-all duration-300 ease-in-out
           bg-[#1a1a1a]
           ${sidebarCollapsed && !mobileMenuOpen 
@@ -140,11 +140,10 @@ export default function Chat() {
             : 'w-64'
           }
           ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-          border-2 border-red-500
         `}>
-          <div className="flex flex-col h-full w-64 border-2 border-blue-500">
+          <div className="flex flex-col h-full w-64">
             {/* Close button on mobile */}
-            <div className="lg:hidden flex justify-end p-2 flex-shrink-0 border-2 border-green-500">
+            <div className="lg:hidden flex justify-end p-2 flex-shrink-0">
               <button
                 onClick={() => setMobileMenuOpen(false)}
                 className="p-2 text-white/50 hover:text-white"
@@ -152,7 +151,7 @@ export default function Chat() {
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto border-2 border-yellow-500">
+            <div className="flex-1 overflow-y-auto min-h-0">
               <Sidebar
                 conversations={conversations}
                 currentId={currentConvId}

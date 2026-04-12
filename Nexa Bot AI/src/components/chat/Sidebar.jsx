@@ -73,7 +73,7 @@ export default function Sidebar({ conversations, currentId, onSelect, onCreate, 
       "flex flex-col bg-[#0d0d0d] border-r border-white/10 transition-all duration-300",
       collapsed ? "w-14" : "w-64"
     )}>
-      {/* Header */}
+      {/* Header - Chevron button removed */}
       <div className="flex items-center justify-between p-3 border-b border-white/10">
         {!collapsed && (
           <div className="flex items-center gap-2">
@@ -81,9 +81,7 @@ export default function Sidebar({ conversations, currentId, onSelect, onCreate, 
             <span className="text-white font-bold text-sm">NEXAbot.AI</span>
           </div>
         )}
-        <Button variant="ghost" size="icon" onClick={onToggle} className="text-white/60 hover:text-white hover:bg-white/10 ml-auto">
-          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-        </Button>
+        {/* Chevron button removed */}
       </div>
 
       {/* New Chat */}

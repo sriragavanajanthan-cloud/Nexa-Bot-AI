@@ -155,14 +155,14 @@ const Sidebar = React.forwardRef((
     );
   }
 
-if (isMobile) {
-  // On mobile, just render a simple div - the parent Chat.jsx handles the slide animation
-  return (
-    <div className="flex flex-col h-full w-full">
-      {children}
-    </div>
-  );
-}
+  if (isMobile) {
+    // On mobile, just render a simple div - the parent Chat.jsx handles the slide animation
+    return (
+      <div className="flex flex-col h-full w-full">
+        {children}
+      </div>
+    );
+  }
 
   return (
     (<div
@@ -327,7 +327,7 @@ const SidebarContent = React.forwardRef(({ className, ...props }, ref) => {
       ref={ref}
       data-sidebar="content"
       className={cn(
-        "flex-1 overflow-y-auto",
+        "flex-1 overflow-y-auto min-h-0",
         className
       )}
       {...props} />)

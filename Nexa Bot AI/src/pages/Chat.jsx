@@ -120,16 +120,6 @@ export default function Chat() {
     <AuthGate>
       <div className="flex h-screen bg-[#111111] text-white overflow-hidden">
       
-        {/* Mobile menu button - only shows on mobile when sidebar is hidden */}
-        {!mobileMenuOpen && (
-          <button
-            onClick={() => setMobileMenuOpen(true)}
-            className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-[#1a1a1a] border border-white/10 rounded-lg text-white/70 hover:text-white transition-colors"
-          >
-            <Menu className="w-4 h-4" />
-          </button>
-        )}
-
         {/* Sidebar */}
         <div className={`
           fixed lg:relative inset-y-0 left-0 z-50 h-full
@@ -176,10 +166,18 @@ export default function Chat() {
         {/* Main Chat Area */}
         <div className="flex flex-col flex-1 overflow-hidden w-full">
           
-          {/* Top bar - Desktop */}
-          <div className="hidden lg:flex items-center justify-between px-6 py-3 border-b border-white/10">
+          {/* Top bar - Now visible on all devices */}
+          <div className="flex items-center justify-between px-6 py-3 border-b border-white/10">
             <button 
-              onClick={() => setSidebarCollapsed(v => !v)}
+              onClick={() => {
+                // On mobile, toggle the slide-out sidebar
+                // On desktop, collapse the sidebar
+                if (window.innerWidth < 1024) {
+                  setMobileMenuOpen(!mobileMenuOpen);
+                } else {
+                  setSidebarCollapsed(v => !v);
+                }
+              }}
               className="text-white/50 hover:text-white/70 p-2 rounded-lg transition-colors"
               title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
@@ -198,20 +196,8 @@ export default function Chat() {
             </button>
           </div>
 
-          {/* Top bar - Mobile */}
-          <div className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-white/10 bg-[#111111]">
-            <div className="w-8" />
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              <span className="text-white/60 text-sm font-medium">NEXAbot.AI</span>
-            </div>
-            <button 
-              onClick={signOut} 
-              className="text-white/30 hover:text-white/70 p-1 rounded"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
+          {/* Top bar - Mobile (hidden now, using the same bar above) */}
+          {/* The separate mobile top bar has been removed */}
 
           {/* Messages - Scrollable Chat List */}
           <div 

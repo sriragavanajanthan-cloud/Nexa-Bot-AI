@@ -156,17 +156,13 @@ const Sidebar = React.forwardRef((
   }
 
 if (isMobile) {
+  // On mobile, just render a simple div - the parent Chat.jsx handles the slide animation
   return (
-    (<Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
-      <SheetContent
-        data-sidebar="sidebar"
-        data-mobile="true"
-        className="w-[--sidebar-width] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
-        style={
-          {
-            "--sidebar-width": SIDEBAR_WIDTH_MOBILE
-          }
-        }
+    <div className="flex flex-col h-full w-full">
+      {children}
+    </div>
+  );
+}
         side={side}>
         <div className="flex flex-col h-full border-2 border-red-500">
           <div className="flex-1 overflow-y-auto border-2 border-green-500">

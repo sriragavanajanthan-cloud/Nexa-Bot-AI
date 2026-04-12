@@ -163,16 +163,6 @@ if (isMobile) {
     </div>
   );
 }
-        side={side}>
-        <div className="flex flex-col h-full border-2 border-red-500">
-          <div className="flex-1 overflow-y-auto border-2 border-green-500">
-            {children}
-          </div>
-        </div>
-      </SheetContent>
-    </Sheet>)
-  );
-}
 
   return (
     (<div

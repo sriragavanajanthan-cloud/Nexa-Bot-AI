@@ -120,13 +120,13 @@ export default function Chat() {
     <AuthGate>
       <div className="flex h-screen bg-[#111111] text-white overflow-hidden">
       
-        {/* Sidebar */}
+        {/* Sidebar - Fully collapses to width 0 */}
         <div className={`
           fixed lg:relative inset-y-0 left-0 z-50 h-full
           transition-all duration-300 ease-in-out
           bg-[#1a1a1a]
           ${sidebarCollapsed && !mobileMenuOpen 
-            ? 'lg:w-0 lg:opacity-0 lg:overflow-hidden' 
+            ? 'w-0 opacity-0 overflow-hidden' 
             : 'w-64'
           }
           ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
@@ -163,10 +163,10 @@ export default function Chat() {
           />
         )}
 
-        {/* Main Chat Area */}
+        {/* Main Chat Area - Expands to full width when sidebar is collapsed */}
         <div className="flex flex-col flex-1 overflow-hidden w-full">
           
-          {/* Top bar - With hamburger button restored */}
+          {/* Top bar */}
           <div className="flex items-center justify-between px-6 py-3 border-b border-white/10">
             <button 
               onClick={() => {

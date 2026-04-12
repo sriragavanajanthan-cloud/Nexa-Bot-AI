@@ -207,7 +207,11 @@ const Sidebar = React.forwardRef((
 Sidebar.displayName = "Sidebar"
 
 // SidebarTrigger - Arrow button removed (returns null)
-
+const SidebarTrigger = React.forwardRef(({ className, onClick, asChild = false, ...props }, ref) => {
+  // Arrow button removed - returns null to hide it
+  return null;
+})
+SidebarTrigger.displayName = "SidebarTrigger"
 
 const SidebarRail = React.forwardRef(({ className, ...props }, ref) => {
   const { toggleSidebar } = useSidebar()

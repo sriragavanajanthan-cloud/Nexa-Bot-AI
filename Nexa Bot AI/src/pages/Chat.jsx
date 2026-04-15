@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { sendChatMessage, invokeLLM, signOut } from "@/lib/api";
+import { sendChatMessage, invokeLLM } from "@/lib/api";
 import * as storage from "@/lib/storage";
 import Sidebar from "@/components/chat/Sidebar";
 import MessageBubble from "@/components/chat/MessageBubble";
 import ChatInput from "@/components/chat/ChatInput";
 import AuthGate from "@/components/AuthGate";
 import { Sparkles, Zap, Code, BookOpen, LogOut, Menu } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 
 const SUGGESTED_PROMPTS = [
@@ -22,7 +23,7 @@ export default function Chat() {
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
+
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
 
@@ -116,10 +117,25 @@ export default function Chat() {
     setIsLoading(false);
   };
 
+  // Updated sign out function using Supabase
+  const handleSignOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Sign out error:", error);
+        return;
+      }
+      localStorage.removeItem("nexabot_user_email");
+      window.location.href = "/";
+    } catch (err) {
+      console.error("Unexpected error:", err);
+    }
+  };
+
   return (
     <AuthGate>
       <div className="flex h-screen bg-[#111111] text-white overflow-hidden">
-      
+
         {/* Sidebar - Fully collapses on desktop, slides on mobile */}
         <div className={`
           fixed lg:relative inset-y-0 left-0 z-50 h-full
@@ -165,7 +181,7 @@ export default function Chat() {
 
         {/* Main Chat Area */}
         <div className="flex flex-col flex-1 overflow-hidden w-full">
-          
+
           {/* Top bar */}
           <div className="flex items-center justify-between px-6 py-3 border-b border-white/10">
             <button 
@@ -186,7 +202,7 @@ export default function Chat() {
               <span className="text-white/60 text-sm font-medium">NEXAbot.AI</span>
             </div>
             <button 
-              onClick={signOut} 
+              onClick={handleSignOut} 
               className="flex items-center gap-1.5 text-white/30 hover:text-white/70 text-xs transition-colors px-2 py-1 rounded hover:bg-white/5"
             >
               <LogOut className="w-3.5 h-3.5" />

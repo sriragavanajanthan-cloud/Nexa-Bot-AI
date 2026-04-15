@@ -1,115 +1,83 @@
-import { useState, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mail, ShieldCheck, ArrowLeft, RefreshCw } from "lucide-react";
-import emailjs from "@emailjs/browser";
-
-console.log('--- EmailJS Debug ---');
-console.log('Service ID:', import.meta.env.VITE_EMAILJS_SERVICE_ID);
-console.log('Template ID:', import.meta.env.VITE_EMAILJS_TEMPLATE_ID);
-console.log('Public Key:', import.meta.env.VITE_EMAILJS_PUBLIC_KEY);
-console.log('---------------------');
-
-
-const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-const TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
-const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
-
-function generateCode() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
+import { supabase } from "@/lib/supabase";
+import { Github, Mail, Loader2 } from "lucide-react";
 
 export default function AuthGate({ children }) {
-  const [email, setEmail] = useState(localStorage.getItem("nexabot_user_email") || "");
-  const [step, setStep] = useState("email"); // "email" | "verify"
-  const [inputEmail, setInputEmail] = useState("");
-  const [code, setCode] = useState("");
-  const [sentCode, setSentCode] = useState(null);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
   const [error, setError] = useState("");
-  const [sending, setSending] = useState(false);
-  const [resendCooldown, setResendCooldown] = useState(0);
-  const cooldownRef = useRef(null);
+  const [message, setMessage] = useState("");
 
-  if (email) return <>{children}</>;
+  useEffect(() => {
+    // Check current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
 
-  const startCooldown = () => {
-    setResendCooldown(30);
-    clearInterval(cooldownRef.current);
-    cooldownRef.current = setInterval(() => {
-      setResendCooldown(prev => {
-        if (prev <= 1) { clearInterval(cooldownRef.current); return 0; }
-        return prev - 1;
-      });
-    }, 1000);
-  };
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
 
-  const sendCode = async () => {
-    const trimmed = inputEmail.trim().toLowerCase();
-    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-      setError("Please enter a valid email address.");
-      return;
-    }
-    setSending(true);
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleMagicLink = async (e) => {
+    e.preventDefault();
+    setAuthLoading(true);
     setError("");
-    const generated = generateCode();
-    setSentCode(generated);
-    try {
-      await emailjs.send(
-        SERVICE_ID,
-        TEMPLATE_ID,
-        { to_email: trimmed, otp_code: generated },
-        PUBLIC_KEY
-      );
-      setStep("verify");
-      startCooldown();
-    } catch (e) {
-      console.error("EmailJS error:", e);
-      const msg = e?.text || e?.message || JSON.stringify(e);
-      setError(`EmailJS error: ${msg}`);
+    setMessage("");
+
+    const redirectUrl = import.meta.env.VITE_REDIRECT_URL || window.location.origin;
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email,
+      options: {
+        emailRedirectTo: redirectUrl,
+      },
+    });
+
+    if (error) {
+      setError(error.message);
+    } else {
+      setMessage(`✨ Magic link sent to ${email}! Check your email.`);
     }
-    setSending(false);
+    setAuthLoading(false);
   };
 
-  const verifyCode = () => {
-    if (code.trim() !== sentCode) {
-      setError("Incorrect code. Please try again.");
-      return;
-    }
-    const trimmed = inputEmail.trim().toLowerCase();
-    const previousEmail = localStorage.getItem("nexabot_user_email");
-    
-    localStorage.setItem("nexabot_user_email", trimmed);
-    setEmail(trimmed);
-    
-    // Force page reload to load new user's chat history
-    // This ensures the ChatContext reloads with the new user's data
-    if (previousEmail && previousEmail !== trimmed) {
-      // If switching users, reload the page to reset all state
-      window.location.reload();
-    }
+  const signInWithGoogle = async () => {
+    const redirectUrl = import.meta.env.VITE_REDIRECT_URL || window.location.origin;
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: redirectUrl }
+    });
   };
-  const resend = async () => {
-    if (resendCooldown > 0 || sending) return;
-    setCode("");
-    setError("");
-    const generated = generateCode();
-    setSentCode(generated);
-    setSending(true);
-    try {
-      await emailjs.send(
-        SERVICE_ID,
-        TEMPLATE_ID,
-        { to_email: inputEmail.trim().toLowerCase(), otp_code: generated },
-        PUBLIC_KEY
-      );
-      startCooldown();
-    } catch (e) {
-      console.error("EmailJS resend error:", e);
-      const msg = e?.text || e?.message || JSON.stringify(e);
-      setError(`EmailJS error: ${msg}`);
-    }
-    setSending(false);
+
+  const signInWithGithub = async () => {
+    const redirectUrl = import.meta.env.VITE_REDIRECT_URL || window.location.origin;
+    await supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: { redirectTo: redirectUrl }
+    });
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0d0d0d] flex items-center justify-center">
+        <div className="text-white">Loading...</div>
+      </div>
+    );
+  }
+
+  if (user) {
+    localStorage.setItem("nexabot_user_email", user.email);
+    return <>{children}</>;
+  }
 
   return (
     <div className="min-h-screen bg-[#0d0d0d] flex items-center justify-center p-4">
@@ -125,82 +93,83 @@ export default function AuthGate({ children }) {
             NEXAbot.AI
           </h1>
           <p className="text-white/50 mt-2 text-sm text-center">
-            {step === "email"
-              ? "Enter your email to save your personalized chat history"
-              : `Enter the 6-digit code sent to ${inputEmail}`}
+            Sign in to save your chat history
           </p>
         </div>
 
         <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-6 space-y-4">
-          {step === "email" ? (
-            <>
-              <div className="space-y-2">
-                <label className="text-white/70 text-sm font-medium">Email Address</label>
-                <Input
-                  type="email"
-                  value={inputEmail}
-                  onChange={(e) => { setInputEmail(e.target.value); setError(""); }}
-                  onKeyDown={(e) => e.key === "Enter" && sendCode()}
-                  placeholder="you@example.com"
-                  className="bg-[#0d0d0d] border-white/10 text-white placeholder:text-white/30 focus-visible:border-cyan-500/50"
-                />
+          {/* Magic Link Form */}
+          <form onSubmit={handleMagicLink} className="space-y-4">
+            <div>
+              <label className="text-white/60 text-sm block mb-1">Email Address</label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                required
+                className="bg-[#0d0d0d] border-white/10 text-white"
+              />
+            </div>
+
+            {error && (
+              <div className="p-3 rounded-lg bg-red-400/10 border border-red-400/20">
+                <p className="text-red-400 text-sm">{error}</p>
               </div>
-              {error && <p className="text-red-400 text-sm">{error}</p>}
-              <Button
-                onClick={sendCode}
-                disabled={!inputEmail || sending}
-                className="w-full bg-gradient-to-r from-cyan-500 to-green-400 hover:opacity-90 text-black font-semibold"
-              >
-                <Mail className="w-4 h-4 mr-2" />
-                {sending ? "Sending code..." : "Send Verification Code"}
-              </Button>
-              <p className="text-white/30 text-xs text-center">
-                We'll email you a 6-digit code — no password needed.
-              </p>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={() => { setStep("email"); setCode(""); setError(""); }}
-                className="flex items-center gap-1.5 text-white/40 hover:text-white/70 text-sm transition-colors"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" /> Back
-              </button>
-              <div className="space-y-2">
-                <label className="text-white/70 text-sm font-medium">Verification Code</label>
-                <Input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  value={code}
-                  onChange={(e) => { setCode(e.target.value.replace(/\D/g, "")); setError(""); }}
-                  onKeyDown={(e) => e.key === "Enter" && verifyCode()}
-                  placeholder="000000"
-                  className="bg-[#0d0d0d] border-white/10 text-white placeholder:text-white/30 text-center text-xl tracking-[0.4em] focus-visible:border-cyan-500/50"
-                />
+            )}
+            {message && (
+              <div className="p-3 rounded-lg bg-green-400/10 border border-green-400/20">
+                <p className="text-green-400 text-sm">{message}</p>
               </div>
-              {error && <p className="text-red-400 text-sm">{error}</p>}
-              <Button
-                onClick={verifyCode}
-                disabled={code.length < 6}
-                className="w-full bg-gradient-to-r from-cyan-500 to-green-400 hover:opacity-90 text-black font-semibold"
-              >
-                <ShieldCheck className="w-4 h-4 mr-2" />
-                Verify & Sign In
-              </Button>
-              <button
-                onClick={resend}
-                disabled={resendCooldown > 0 || sending}
-                className="w-full flex items-center justify-center gap-1.5 text-white/40 hover:text-white/70 text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend code"}
-              </button>
-            </>
-          )}
+            )}
+
+            <Button
+              type="submit"
+              disabled={authLoading}
+              className="w-full bg-gradient-to-r from-cyan-500 to-green-400 text-black font-semibold"
+            >
+              {authLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+              Send Magic Link
+            </Button>
+          </form>
+
+          {/* Divider */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/10"></div>
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-[#1a1a1a] px-2 text-white/40">Or continue with</span>
+            </div>
+          </div>
+
+          {/* Social Buttons */}
+          <Button
+            onClick={signInWithGoogle}
+            className="w-full bg-white hover:bg-gray-100 text-black font-semibold flex items-center justify-center gap-2"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Continue with Google
+          </Button>
+
+          <Button
+            onClick={signInWithGithub}
+            className="w-full bg-[#24292e] hover:bg-[#1b1f23] text-white font-semibold"
+          >
+            <Github className="w-4 h-4 mr-2" />
+            Continue with GitHub
+          </Button>
+
+          <p className="text-white/30 text-xs text-center">
+            No password needed — check your email for a magic link
+          </p>
         </div>
       </div>
     </div>
   );
 }
-

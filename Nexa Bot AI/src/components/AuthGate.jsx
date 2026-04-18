@@ -2,22 +2,25 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
-import { Github, Mail, Loader2 } from "lucide-react";
+import { Github, Loader2, Mail } from "lucide-react";
 
 export default function AuthGate({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
-  const [authLoading, setAuthLoading] = useState(false);
+  const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
+  // Check current session on mount
   useEffect(() => {
-    // Check current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
       setLoading(false);
-    });
+    };
+
+    getSession();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -27,27 +30,33 @@ export default function AuthGate({ children }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleMagicLink = async (e) => {
+  const sendMagicLink = async (e) => {
     e.preventDefault();
-    setAuthLoading(true);
+    if (!email.trim()) {
+      setError("Please enter your email address");
+      return;
+    }
+
+    setSending(true);
     setError("");
     setMessage("");
 
     const redirectUrl = import.meta.env.VITE_REDIRECT_URL || window.location.origin;
 
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email,
+    const { error: authError } = await supabase.auth.signInWithOtp({
+      email: email.trim(),
       options: {
         emailRedirectTo: redirectUrl,
       },
     });
 
-    if (error) {
-      setError(error.message);
+    if (authError) {
+      setError(authError.message);
     } else {
-      setMessage(`✨ Magic link sent to ${email}! Check your email.`);
+      setMessage(`✨ Magic link sent to ${email}! Check your inbox.`);
+      setEmail("");
     }
-    setAuthLoading(false);
+    setSending(false);
   };
 
   const signInWithGoogle = async () => {
@@ -69,7 +78,7 @@ export default function AuthGate({ children }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0d0d0d] flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+        <div className="text-white/60">Loading...</div>
       </div>
     );
   }
@@ -80,55 +89,64 @@ export default function AuthGate({ children }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#0d0d0d] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#0d0d0d] to-[#1a1a1a] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
+        {/* Logo Section */}
         <div className="flex flex-col items-center mb-8">
-          <img
-            src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/926442f73_NEXAbotAI.png"
-            alt="NEXAbot.AI"
-            className="w-20 h-20 rounded-full mb-4"
-          />
+          <div className="w-20 h-20 rounded-full bg-gradient-to-r from-cyan-500 to-green-400 p-0.5 mb-4">
+            <div className="w-full h-full rounded-full bg-[#0d0d0d] flex items-center justify-center">
+              <span className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-green-400 bg-clip-text text-transparent">N</span>
+            </div>
+          </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-green-400 bg-clip-text text-transparent">
             NEXAbot.AI
           </h1>
-          <p className="text-white/50 mt-2 text-sm text-center">
+          <p className="text-white/40 mt-2 text-sm text-center">
             Sign in to save your chat history
           </p>
         </div>
 
-        <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-6 space-y-4">
+        {/* Auth Card */}
+        <div className="bg-[#1a1a1a]/80 backdrop-blur-sm border border-white/10 rounded-2xl p-6 space-y-4">
           {/* Magic Link Form */}
-          <form onSubmit={handleMagicLink} className="space-y-4">
+          <form onSubmit={sendMagicLink} className="space-y-3">
             <div>
-              <label className="text-white/60 text-sm block mb-1">Email Address</label>
+              <label className="text-white/50 text-sm block mb-1.5">Email Address</label>
               <Input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError("");
+                  setMessage("");
+                }}
                 placeholder="you@example.com"
                 required
-                className="bg-[#0d0d0d] border-white/10 text-white"
+                className="bg-[#0d0d0d] border-white/10 text-white placeholder:text-white/20 focus:border-cyan-500/50"
               />
             </div>
 
             {error && (
-              <div className="p-3 rounded-lg bg-red-400/10 border border-red-400/20">
+              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
                 <p className="text-red-400 text-sm">{error}</p>
               </div>
             )}
             {message && (
-              <div className="p-3 rounded-lg bg-green-400/10 border border-green-400/20">
+              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
                 <p className="text-green-400 text-sm">{message}</p>
               </div>
             )}
 
             <Button
               type="submit"
-              disabled={authLoading}
-              className="w-full bg-gradient-to-r from-cyan-500 to-green-400 text-black font-semibold"
+              disabled={sending}
+              className="w-full bg-gradient-to-r from-cyan-500 to-green-400 hover:opacity-90 text-black font-semibold"
             >
-              {authLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+              {sending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Mail className="w-4 h-4 mr-2" />
+              )}
               Send Magic Link
             </Button>
           </form>
@@ -139,7 +157,7 @@ export default function AuthGate({ children }) {
               <div className="w-full border-t border-white/10"></div>
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-[#1a1a1a] px-2 text-white/40">Or continue with</span>
+              <span className="bg-[#1a1a1a] px-2 text-white/30">Or continue with</span>
             </div>
           </div>
 

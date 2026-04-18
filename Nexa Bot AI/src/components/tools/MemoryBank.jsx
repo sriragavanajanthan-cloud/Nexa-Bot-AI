@@ -11,7 +11,13 @@ import {
 } from "lucide-react";
 
 // Simple categories
-const CATEGORIES = ["💼 Work", "🏠 Personal", "💻 Coding", "📚 Learning", "📁 Other"];
+const CATEGORIES = [
+  { id: "work", name: "💼 Work", color: "bg-blue-500/20 text-blue-400" },
+  { id: "personal", name: "🏠 Personal", color: "bg-green-500/20 text-green-400" },
+  { id: "coding", name: "💻 Coding", color: "bg-cyan-500/20 text-cyan-400" },
+  { id: "learning", name: "📚 Learning", color: "bg-yellow-500/20 text-yellow-400" },
+  { id: "other", name: "📁 Other", color: "bg-gray-500/20 text-gray-400" },
+];
 
 export default function MemoryBank() {
   const [memories, setMemories] = useState([]);
@@ -28,7 +34,7 @@ export default function MemoryBank() {
   // Form state
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
-  const [cat, setCat] = useState("📁 Other");
+  const [cat, setCat] = useState("other");
   const [tags, setTags] = useState("");
   const [stars, setStars] = useState(3);
   const [links, setLinks] = useState([]);
@@ -92,16 +98,16 @@ export default function MemoryBank() {
       scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
     }
     
-    reset();
+    resetForm();
     setShowForm(false);
     setEditingId(null);
   };
 
   // Reset form
-  const reset = () => {
+  const resetForm = () => {
     setTitle("");
     setDesc("");
-    setCat("📁 Other");
+    setCat("other");
     setTags("");
     setStars(3);
     setLinks([]);
@@ -155,10 +161,14 @@ export default function MemoryBank() {
     return new Date(date).toLocaleDateString();
   };
 
+  const getCategoryName = (id) => {
+    return CATEGORIES.find(c => c.id === id)?.name || "📁 Other";
+  };
+
   return (
-    <div className="flex flex-col bg-[#111111] text-white" style={{ height: '100%', maxHeight: '100vh' }}>
-      {/* Header - Fixed */}
-      <div className="flex-shrink-0 p-4 border-b border-white/10">
+    <div className="flex flex-col h-full bg-[#111111] text-white">
+      {/* Header */}
+      <div className="p-4 border-b border-white/10">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Brain className="w-5 h-5 text-red-400" />
@@ -177,95 +187,91 @@ export default function MemoryBank() {
 
         {/* Category filter */}
         <div className="flex gap-2 overflow-x-auto">
-          <button onClick={() => setCategory("all")} className={`px-2 py-1 rounded-md text-xs ${category === "all" ? "bg-white/20 text-white" : "bg-white/5 text-white/60"}`}>📋 All ({memories.length})</button>
+          <button onClick={() => setCategory("all")} className={`px-2 py-1 rounded-md text-xs whitespace-nowrap ${category === "all" ? "bg-white/20 text-white" : "bg-white/5 text-white/60"}`}>📋 All ({memories.length})</button>
           {CATEGORIES.map(c => (
-            <button key={c} onClick={() => setCategory(c)} className={`px-2 py-1 rounded-md text-xs ${category === c ? "bg-white/20 text-white" : "bg-white/5 text-white/60"}`}>{c}</button>
+            <button key={c.id} onClick={() => setCategory(c.id)} className={`px-2 py-1 rounded-md text-xs whitespace-nowrap ${category === c.id ? c.color : "bg-white/5 text-white/60"}`}>{c.name}</button>
           ))}
         </div>
       </div>
 
-      {/* Add Button - Fixed */}
-      <div className="flex-shrink-0 p-4">
+      {/* Add Button / Form - MODAL WITH SCROLL ON MOBILE */}
+      <div className="p-4">
         {!showForm ? (
           <Button onClick={() => setShowForm(true)} className="w-full bg-gradient-to-r from-red-500 to-orange-500 text-white">
             <Plus className="w-4 h-4 mr-2" /> ✨ Add Memory
           </Button>
         ) : (
-          <div className="bg-[#1a1a1a] border border-white/10 rounded-xl p-4 space-y-3">
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="📝 Title..." className="bg-[#0d0d0d] border-white/10 text-white" />
-            <Textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="📄 Description..." className="bg-[#0d0d0d] border-white/10 text-white resize-none min-h-[70px]" />
-            
-            {/* AI Buttons */}
-            <div className="flex gap-2">
-              <Button 
-                onClick={genDesc} 
-                disabled={loading || !title} 
-                variant="outline" 
-                size="sm" 
-                className="flex-1 border-white/20 bg-gray-600/30 text-white/80 hover:bg-gray-600/50"
-              >
-                <Sparkles className="w-3 h-3 mr-1" /> ✨ AI Describe
-              </Button>
-              <Button 
-                onClick={genTags} 
-                disabled={loading || (!title && !desc)} 
-                variant="outline" 
-                size="sm" 
-                className="flex-1 border-white/20 bg-gray-600/30 text-white/80 hover:bg-gray-600/50"
-              >
-                <Tag className="w-3 h-3 mr-1" /> 🏷️ Suggest Tags
-              </Button>
-            </div>
-            
-            {/* Links */}
-            <div>
-              <label className="text-white/50 text-xs">🔗 Links</label>
-              <div className="flex gap-2 mt-1">
-                <Input value={newLink} onChange={(e) => setNewLink(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addLink()} placeholder="Paste URL..." className="flex-1 bg-[#0d0d0d] border-white/10 text-white text-sm" />
-                <Button onClick={addLink} size="sm" variant="outline" className="border-white/20"><Plus className="w-3 h-3" /></Button>
+          // Modal overlay - scrollable on mobile
+          <div className="fixed inset-0 z-50 bg-black/70 flex items-end sm:items-center justify-center p-0 sm:p-4">
+            <div className="bg-[#1a1a1a] w-full sm:max-w-md max-h-[90vh] sm:rounded-xl overflow-hidden">
+              {/* Sticky Header */}
+              <div className="sticky top-0 bg-[#1a1a1a] p-4 border-b border-white/10 flex justify-between items-center">
+                <h3 className="text-white font-semibold">{editingId ? "Edit Memory" : "Add Memory"}</h3>
+                <button onClick={() => { resetForm(); setShowForm(false); setEditingId(null); }} className="text-white/50 hover:text-white p-1 rounded">
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              {links.map((link, idx) => (
-                <div key={idx} className="flex items-center justify-between bg-white/5 rounded px-2 py-1 mt-1">
-                  <span className="text-white/60 text-xs truncate">{link.name}</span>
-                  <button onClick={() => setLinks(links.filter((_, i) => i !== idx))} className="text-white/30 hover:text-red-400"><X className="w-3 h-3" /></button>
+              
+              {/* Scrollable Form Content */}
+              <div className="p-4 space-y-3 overflow-y-auto max-h-[calc(90vh-60px)]">
+                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="📝 Title..." className="bg-[#0d0d0d] border-white/10 text-white" />
+                <Textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="📄 Description..." className="bg-[#0d0d0d] border-white/10 text-white resize-none min-h-[80px]" />
+                
+                {/* AI Buttons */}
+                <div className="flex gap-2">
+                  <Button onClick={genDesc} disabled={loading || !title} variant="outline" size="sm" className="flex-1 border-white/20 bg-gray-600/30 text-white/80">
+                    <Sparkles className="w-3 h-3 mr-1" /> AI Describe
+                  </Button>
+                  <Button onClick={genTags} disabled={loading || (!title && !desc)} variant="outline" size="sm" className="flex-1 border-white/20 bg-gray-600/30 text-white/80">
+                    <Tag className="w-3 h-3 mr-1" /> Suggest Tags
+                  </Button>
                 </div>
-              ))}
-            </div>
-            
-            {/* Category & Tags */}
-            <div className="flex gap-2">
-              <select value={cat} onChange={(e) => setCat(e.target.value)} className="flex-1 bg-[#0d0d0d] border border-white/10 rounded-md px-3 py-2 text-white text-sm">
-                {CATEGORIES.map(c => <option key={c}>{c}</option>)}
-              </select>
-              <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="🏷️ Tags (comma)" className="flex-1 bg-[#0d0d0d] border-white/10 text-white text-sm" />
-            </div>
-            
-            {/* Stars & Buttons */}
-            <div className="flex items-center justify-between">
-              <div className="flex gap-1">
-                {[1,2,3,4,5].map(s => (
-                  <button key={s} onClick={() => setStars(s)}><Star className={`w-5 h-5 ${s <= stars ? "text-yellow-400 fill-yellow-400" : "text-white/30"}`} /></button>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Button onClick={save} disabled={!title} size="sm" className="bg-green-500/20 text-green-400"><Save className="w-3 h-3 mr-1" /> Save</Button>
-                <Button onClick={() => { reset(); setShowForm(false); setEditingId(null); }} variant="ghost" size="sm" className="text-white/40"><X className="w-3 h-3" /></Button>
+                
+                {/* Links */}
+                <div>
+                  <label className="text-white/50 text-xs">🔗 Links</label>
+                  <div className="flex gap-2 mt-1">
+                    <Input value={newLink} onChange={(e) => setNewLink(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addLink()} placeholder="Paste URL..." className="flex-1 bg-[#0d0d0d] border-white/10 text-white text-sm" />
+                    <Button onClick={addLink} size="sm" variant="outline" className="border-white/20"><Plus className="w-3 h-3" /></Button>
+                  </div>
+                  {links.map((link, idx) => (
+                    <div key={idx} className="flex items-center justify-between bg-white/5 rounded px-2 py-1 mt-1">
+                      <span className="text-white/60 text-xs truncate">{link.name}</span>
+                      <button onClick={() => setLinks(links.filter((_, i) => i !== idx))} className="text-white/30 hover:text-red-400"><X className="w-3 h-3" /></button>
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Category & Tags */}
+                <div className="flex gap-2">
+                  <select value={cat} onChange={(e) => setCat(e.target.value)} className="flex-1 bg-[#0d0d0d] border border-white/10 rounded-md px-3 py-2 text-white text-sm">
+                    {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                  <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="🏷️ Tags" className="flex-1 bg-[#0d0d0d] border-white/10 text-white text-sm" />
+                </div>
+                
+                {/* Stars */}
+                <div className="flex justify-center gap-2 py-2">
+                  {[1,2,3,4,5].map(s => (
+                    <button key={s} onClick={() => setStars(s)}>
+                      <Star className={`w-6 h-6 ${s <= stars ? "text-yellow-400 fill-yellow-400" : "text-white/30"}`} />
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Action Buttons */}
+                <div className="flex gap-2 pt-2">
+                  <Button onClick={save} disabled={!title} className="flex-1 bg-green-500/20 text-green-400"><Save className="w-4 h-4 mr-1" /> {editingId ? "Update" : "Save"}</Button>
+                  <Button onClick={() => { resetForm(); setShowForm(false); setEditingId(null); }} variant="ghost" className="text-white/40">Cancel</Button>
+                </div>
               </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* SCROLLABLE MEMORIES LIST - Shows ~3 memories before scrolling */}
-      <div 
-        ref={scrollRef} 
-        className="px-4 pb-4 space-y-2"
-        style={{ 
-          overflowY: 'auto',
-          maxHeight: '320px',
-          minHeight: '100px'
-        }}
-      >
+      {/* Memories List - Scrollable */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 pb-4 space-y-2">
         {sorted.length === 0 ? (
           <div className="text-center py-12">
             <FolderOpen className="w-12 h-12 text-white/20 mx-auto mb-3" />
@@ -275,7 +281,6 @@ export default function MemoryBank() {
         ) : (
           sorted.map(m => (
             <div key={m.id} className="bg-[#1a1a1a] border border-white/10 rounded-xl overflow-hidden">
-              {/* Memory Header - Click to expand/collapse */}
               <div onClick={() => setExpandedId(expandedId === m.id ? null : m.id)} className="p-3 cursor-pointer hover:bg-white/5">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -290,13 +295,12 @@ export default function MemoryBank() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 mt-2">
-                  <span className="bg-white/10 px-1.5 py-0.5 rounded text-xs">{m.category}</span>
+                  <span className={CATEGORIES.find(c => c.id === m.category)?.color + " px-1.5 py-0.5 rounded text-xs"}>{getCategoryName(m.category)}</span>
                   <span className="text-white/30 text-xs flex items-center gap-1"><Clock className="w-3 h-3" /> {formatDate(m.date)}</span>
                   {m.links?.length > 0 && <span className="text-white/30 text-xs">🔗 {m.links.length}</span>}
                 </div>
               </div>
 
-              {/* Expanded Content - NO SCROLLBAR HERE */}
               {expandedId === m.id && (
                 <div className="px-3 pb-3 pt-0 border-t border-white/10 space-y-2">
                   <p className="text-white/70 text-sm">{m.desc}</p>
@@ -341,7 +345,7 @@ const SAMPLE = [
     id: 1,
     title: "Project Alpha",
     desc: "Planning and timeline for Q2 deliverables",
-    category: "💼 Work",
+    category: "work",
     tags: ["planning", "deadlines"],
     stars: 5,
     links: [{ url: "#chat:alpha", name: "Alpha Chat" }],
@@ -351,7 +355,7 @@ const SAMPLE = [
     id: 2,
     title: "React Tips",
     desc: "useMemo, useCallback, and performance optimization",
-    category: "💻 Coding",
+    category: "coding",
     tags: ["react", "performance"],
     stars: 4,
     links: [],
@@ -361,7 +365,7 @@ const SAMPLE = [
     id: 3,
     title: "Japan Trip",
     desc: "Tokyo and Kyoto itinerary for spring",
-    category: "🏠 Personal",
+    category: "personal",
     tags: ["travel", "japan"],
     stars: 3,
     links: [{ url: "https://japan-guide.com", name: "Travel Guide" }],

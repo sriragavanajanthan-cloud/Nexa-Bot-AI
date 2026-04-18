@@ -92,19 +92,19 @@ export default function AuthGate({ children }) {
     <div className="min-h-screen bg-gradient-to-br from-[#0d0d0d] to-[#1a1a1a] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo Section */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-r from-cyan-500 to-green-400 p-0.5 mb-4">
-            <div className="w-full h-full rounded-full bg-[#0d0d0d] flex items-center justify-center">
-              <span className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-green-400 bg-clip-text text-transparent">N</span>
-            </div>
-          </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-green-400 bg-clip-text text-transparent">
-            NEXAbot.AI
-          </h1>
-          <p className="text-white/40 mt-2 text-sm text-center">
-            Sign in to save your chat history
-          </p>
-        </div>
+       <div className="flex flex-col items-center mb-8">
+  <img
+    src="https://qxgkityhhwgwohehetek.supabase.co/storage/v1/object/public/Nexa/926442f73_NEXAbotAI.png"
+    alt="NEXAbot.AI Logo"
+    className="w-24 h-24 rounded-full mb-4 object-cover"
+  />
+  <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-green-400 bg-clip-text text-transparent">
+    NEXAbot.AI
+  </h1>
+  <p className="text-white/40 mt-2 text-sm text-center">
+    Sign in to save your chat history
+  </p>
+</div>
 
         {/* Auth Card */}
         <div className="bg-[#1a1a1a]/80 backdrop-blur-sm border border-white/10 rounded-2xl p-6 space-y-4">

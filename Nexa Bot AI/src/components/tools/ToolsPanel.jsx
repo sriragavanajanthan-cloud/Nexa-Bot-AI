@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 
 // Import all tool components
 import MemoryBank from "./MemoryBank";
-import LanguageTranslator from "./LanguageTranslator";
 import AIDetector from "./AIDetector";
 import ImageVideoGenerator from "./ImageVideoGenerator";
 import ImageEditor from "./ImageEditor";
@@ -13,13 +12,12 @@ import GraphingTool from "./GraphingTool";
 import ImageAmplifier from "./ImageAmplifier";
 
 const TOOLS = [
-  { id: "memory", label: "Memory Bank", icon: "🧠", color: "text-red-400", component: MemoryBank },
-  { id: "translate", label: "Translator", icon: "🌐", color: "text-orange-400", component: LanguageTranslator },
-  { id: "aidetect", label: "AI Detector", icon: "🔍", color: "text-amber-400", component: AIDetector },
+  { id: "memory", label: "Memory Bank", icon: "📝", color: "text-red-400", component: MemoryBank },
+  { id: "aidetect", label: "AI Detector", icon: "🔍", color: "text-orange-400", component: AIDetector },
   { id: "imagegen", label: "Image Generator", icon: "🎨", color: "text-yellow-400", component: ImageVideoGenerator },
   { id: "imageedit", label: "Image Editor", icon: "✏️", color: "text-green-400", component: ImageEditor },
   { id: "graph", label: "Graphing", icon: "📊", color: "text-blue-400", component: GraphingTool },
-  { id: "amplify", label: "Image Amplifier", icon: "⚡", color: "text-purple-400", component: ImageAmplifier },
+  { id: "amplify", label: "Image Amplifier", icon: "🔊", color: "text-purple-400", component: ImageAmplifier },
 ];
 
 // Mobile-optimized Modal Component
@@ -64,7 +62,7 @@ function ToolModal({ tool, onClose }) {
         {/* Modal Header */}
         <div className="sticky top-0 bg-[#1a1a1a] px-4 py-3 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-xl">{tool.icon}</span>
+            <span className={cn("text-xl", tool.color)}>{tool.icon}</span>
             <h2 className="text-white font-semibold text-base sm:text-lg">{tool.label}</h2>
           </div>
           <button
@@ -112,7 +110,7 @@ export default function ToolsPanel({ onClose }) {
         <div className="flex flex-col w-full">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-white/10">
-            <h2 className="text-white font-bold text-sm">⚙️ AI Tools</h2>
+            <h2 className="text-white font-bold text-sm">🛠️ AI Tools</h2>
             <Button variant="ghost" size="icon" onClick={onClose} className="w-8 h-8 text-white/40 hover:text-white hover:bg-white/10 rounded-lg">
               <X className="w-4 h-4" />
             </Button>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Brain, ScanSearch, ImageIcon, Wand2, BarChart2, Zap, X, ChevronRight } from "lucide-react";
+import { Brain, ScanSearch, ImageIcon, Wand2, BarChart2, Zap, Film, X, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import MemoryBank from "./MemoryBank";
@@ -8,6 +8,7 @@ import ImageVideoGenerator from "./ImageVideoGenerator";
 import ImageEditor from "./ImageEditor";
 import GraphingTool from "./GraphingTool";
 import ImageAmplifier from "./ImageAmplifier";
+import VideoGenerator from "./VideoGenerator";
 
 const TOOLS = [
   { id: "memory", label: "Memory Bank", icon: Brain, color: "text-red-400", component: MemoryBank },
@@ -16,6 +17,7 @@ const TOOLS = [
   { id: "imageedit", label: "Image Editor", icon: Wand2, color: "text-green-400", component: ImageEditor },
   { id: "graph", label: "Graphing", icon: BarChart2, color: "text-blue-400", component: GraphingTool },
   { id: "amplify", label: "Image Amplifier", icon: Zap, color: "text-purple-400", component: ImageAmplifier },
+  { id: "videogen", label: "Video Generator", icon: Film, color: "text-pink-400", component: VideoGenerator },
 ];
 
 // Modal Component for Tools
@@ -53,7 +55,7 @@ function ToolModal({ tool, onClose }) {
           "bg-[#1a1a1a] border-white/10 shadow-2xl overflow-hidden transition-all duration-300",
           isMobile 
             ? "w-full rounded-t-2xl max-h-[90vh] animate-slide-up" 
-            : "relative w-full max-w-3xl max-h-[85vh] rounded-xl border"
+            : "relative w-full max-w-4xl max-h-[85vh] rounded-xl border"
         )}
         onClick={(e) => e.stopPropagation()}
       >

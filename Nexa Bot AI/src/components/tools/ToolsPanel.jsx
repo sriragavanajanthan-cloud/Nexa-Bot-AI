@@ -33,31 +33,31 @@ export default function ToolsPanel({ onClose }) {
   const ActiveComponent = activeTool ? TOOL_COMPONENTS[activeTool] : null;
 
   return (
-    <div className="flex h-full bg-[#0d0d0d] border-l border-white/10" style={{ width: 300 }}>
+    <div className="flex h-full bg-[#0d0d0d] border-l border-white/10" style={{ width: 320 }}>
       {/* Tool List */}
       {!activeTool && (
         <div className="flex flex-col w-full">
-          <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
-            <span className="text-white/50 text-xs font-medium tracking-wide">AI TOOLS</span>
+          <div className="flex items-center justify-between px-5 py-5 border-b border-white/10">
+            <span className="text-white/60 text-sm font-medium tracking-wide">AI TOOLS</span>
             <button 
               onClick={onClose} 
-              className="text-white/30 hover:text-white/60 transition-colors"
+              className="text-white/40 hover:text-white/70 transition-colors"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
-          <div className="flex-1 py-2">
+          <div className="flex-1 py-3">
             {TOOLS.map(tool => {
               const Icon = tool.icon;
               return (
                 <button
                   key={tool.id}
                   onClick={() => setActiveTool(tool.id)}
-                  className="w-full flex items-center gap-3 px-4 py-2 hover:bg-white/5 transition-colors text-left group"
+                  className="w-full flex items-center gap-4 px-5 py-3 hover:bg-white/5 transition-colors text-left group"
                 >
-                  <Icon className={cn("w-4 h-4", tool.color)} />
-                  <span className="text-white/70 text-sm flex-1">{tool.label}</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
+                  <Icon className={cn("w-5 h-5", tool.color)} />
+                  <span className="text-white/80 text-base flex-1">{tool.label}</span>
+                  <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/50 transition-colors" />
                 </button>
               );
             })}

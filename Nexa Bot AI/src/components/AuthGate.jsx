@@ -1,145 +1,193 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { X, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { supabase } from "@/lib/supabase";
+import { Github, Loader2, Mail } from "lucide-react";
 
-// Import all tool components
-import MemoryBank from "./MemoryBank";
-import AIDetector from "./AIDetector";
-import ImageVideoGenerator from "./ImageVideoGenerator";
-import ImageEditor from "./ImageEditor";
-import GraphingTool from "./GraphingTool";
-import ImageAmplifier from "./ImageAmplifier";
+export default function AuthGate({ children }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState("");
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
-const TOOLS = [
-  { id: "memory", label: "Memory Bank", icon: "📝", color: "text-red-400", component: MemoryBank },
-  { id: "aidetect", label: "AI Detector", icon: "🔍", color: "text-orange-400", component: AIDetector },
-  { id: "imagegen", label: "Image Generator", icon: "🎨", color: "text-yellow-400", component: ImageVideoGenerator },
-  { id: "imageedit", label: "Image Editor", icon: "✏️", color: "text-green-400", component: ImageEditor },
-  { id: "graph", label: "Graphing", icon: "📊", color: "text-blue-400", component: GraphingTool },
-  { id: "amplify", label: "Image Amplifier", icon: "🔊", color: "text-purple-400", component: ImageAmplifier },
-];
-
-// Mobile-optimized Modal Component
-function ToolModal({ tool, onClose }) {
-  const ToolComponent = tool.component;
-  const [isMobile, setIsMobile] = useState(false);
-
+  // Check current session on mount
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+      setLoading(false);
     };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+
+    getSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = 'auto';
-    };
-  }, []);
+  const sendMagicLink = async (e) => {
+    e.preventDefault();
+    if (!email.trim()) {
+      setError("Please enter your email address");
+      return;
+    }
+
+    setSending(true);
+    setError("");
+    setMessage("");
+
+    const redirectUrl = import.meta.env.VITE_REDIRECT_URL || window.location.origin;
+
+    const { error: authError } = await supabase.auth.signInWithOtp({
+      email: email.trim(),
+      options: {
+        emailRedirectTo: redirectUrl,
+      },
+    });
+
+    if (authError) {
+      setError(authError.message);
+    } else {
+      setMessage(`✨ Magic link sent to ${email}! Check your inbox.`);
+      setEmail("");
+    }
+    setSending(false);
+  };
+
+  const signInWithGoogle = async () => {
+    const redirectUrl = import.meta.env.VITE_REDIRECT_URL || window.location.origin;
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: redirectUrl }
+    });
+  };
+
+  const signInWithGithub = async () => {
+    const redirectUrl = import.meta.env.VITE_REDIRECT_URL || window.location.origin;
+    await supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: { redirectTo: redirectUrl }
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0d0d0d] flex items-center justify-center">
+        <div className="text-white/60">Loading...</div>
+      </div>
+    );
+  }
+
+  if (user) {
+    localStorage.setItem("nexabot_user_email", user.email);
+    return <>{children}</>;
+  }
 
   return (
-    <div 
-      className={cn(
-        "fixed inset-0 z-50 bg-black/70 transition-all duration-300",
-        isMobile ? "flex items-end" : "flex items-center justify-center"
-      )}
-      onClick={onClose}
-    >
-      <div 
-        className={cn(
-          "bg-[#1a1a1a] border-white/10 shadow-2xl overflow-hidden transition-all duration-300",
-          isMobile 
-            ? "w-full rounded-t-2xl max-h-[90vh] animate-slide-up" 
-            : "relative w-full max-w-2xl max-h-[85vh] rounded-xl border"
-        )}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Modal Header */}
-        <div className="sticky top-0 bg-[#1a1a1a] px-4 py-3 border-b border-white/10 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className={cn("text-xl", tool.color)}>{tool.icon}</span>
-            <h2 className="text-white font-semibold text-base sm:text-lg">{tool.label}</h2>
+    <div className="min-h-screen bg-gradient-to-br from-[#0d0d0d] to-[#1a1a1a] flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Logo Section */}
+       <div className="flex flex-col items-center mb-8">
+  <img
+    src="https://qxgkityhhwgwohehetek.supabase.co/storage/v1/object/public/Nexa/926442f73_NEXAbotAI.png"
+    alt="NEXAbot.AI Logo"
+    className="w-24 h-24 rounded-full mb-4 object-cover"
+  />
+  <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-green-400 bg-clip-text text-transparent">
+    NEXAbot.AI
+  </h1>
+  <p className="text-white/40 mt-2 text-sm text-center">
+    Sign in to save your chat history
+  </p>
+</div>
+
+        {/* Auth Card */}
+        <div className="bg-[#1a1a1a]/80 backdrop-blur-sm border border-white/10 rounded-2xl p-6 space-y-4">
+          {/* Magic Link Form */}
+          <form onSubmit={sendMagicLink} className="space-y-3">
+            <div>
+              <label className="text-white/50 text-sm block mb-1.5">Email Address</label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError("");
+                  setMessage("");
+                }}
+                placeholder="you@example.com"
+                required
+                className="bg-[#0d0d0d] border-white/10 text-white placeholder:text-white/20 focus:border-cyan-500/50"
+              />
+            </div>
+
+            {error && (
+              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                <p className="text-red-400 text-sm">{error}</p>
+              </div>
+            )}
+            {message && (
+              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                <p className="text-green-400 text-sm">{message}</p>
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              disabled={sending}
+              className="w-full bg-gradient-to-r from-cyan-500 to-green-400 hover:opacity-90 text-black font-semibold"
+            >
+              {sending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Mail className="w-4 h-4 mr-2" />
+              )}
+              Send Magic Link
+            </Button>
+          </form>
+
+          {/* Divider */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/10"></div>
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-[#1a1a1a] px-2 text-white/30">Or continue with</span>
+            </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-colors active:bg-white/20"
+
+          {/* Social Buttons */}
+          <Button
+            onClick={signInWithGoogle}
+            className="w-full bg-white hover:bg-gray-100 text-black font-semibold flex items-center justify-center gap-2"
           >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        
-        {/* Modal Content */}
-        <div className="overflow-y-auto" style={{ maxHeight: isMobile ? 'calc(90vh - 60px)' : 'calc(85vh - 60px)' }}>
-          <ToolComponent />
+            <svg className="w-4 h-4" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Continue with Google
+          </Button>
+
+          <Button
+            onClick={signInWithGithub}
+            className="w-full bg-[#24292e] hover:bg-[#1b1f23] text-white font-semibold"
+          >
+            <Github className="w-4 h-4 mr-2" />
+            Continue with GitHub
+          </Button>
+
+          <p className="text-white/30 text-xs text-center">
+            No password needed — check your email for a magic link
+          </p>
         </div>
       </div>
     </div>
-  );
-}
-
-export default function ToolsPanel({ onClose }) {
-  const [activeTool, setActiveTool] = useState(null);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  const handleToolClick = (tool) => {
-    setActiveTool(tool);
-  };
-
-  const handleCloseModal = () => {
-    setActiveTool(null);
-  };
-
-  return (
-    <>
-      {/* Tools Panel Sidebar */}
-      <div className="flex h-full bg-[#0d0d0d] border-l border-white/10" style={{ width: isMobile ? '100%' : 280 }}>
-        <div className="flex flex-col w-full">
-          {/* Header - Cleaner look */}
-          <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
-            <h2 className="text-white font-medium text-sm tracking-wide">AI Tools</h2>
-            <button 
-              onClick={onClose} 
-              className="text-white/40 hover:text-white/70 transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          
-          {/* Tools List - Clean list without icon backgrounds */}
-          <div className="flex-1 py-2">
-            {TOOLS.map((tool) => (
-              <button
-                key={tool.id}
-                onClick={() => handleToolClick(tool)}
-                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 transition-colors text-left group"
-              >
-                <span className={cn("text-lg", tool.color)}>{tool.icon}</span>
-                <span className="text-white/70 text-sm flex-1">{tool.label}</span>
-                <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Modal - opens when a tool is clicked */}
-      {activeTool && (
-        <ToolModal tool={activeTool} onClose={handleCloseModal} />
-      )}
-    </>
   );
 }

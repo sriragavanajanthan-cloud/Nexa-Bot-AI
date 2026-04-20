@@ -106,29 +106,30 @@ export default function ToolsPanel({ onClose }) {
   return (
     <>
       {/* Tools Panel Sidebar */}
-      <div className="flex h-full bg-[#0d0d0d] border-l border-white/10" style={{ width: isMobile ? '100%' : 320 }}>
+      <div className="flex h-full bg-[#0d0d0d] border-l border-white/10" style={{ width: isMobile ? '100%' : 280 }}>
         <div className="flex flex-col w-full">
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-white/10">
-            <h2 className="text-white font-bold text-sm">🛠️ AI Tools</h2>
-            <Button variant="ghost" size="icon" onClick={onClose} className="w-8 h-8 text-white/40 hover:text-white hover:bg-white/10 rounded-lg">
+          {/* Header - Cleaner look */}
+          <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
+            <h2 className="text-white font-medium text-sm tracking-wide">AI Tools</h2>
+            <button 
+              onClick={onClose} 
+              className="text-white/40 hover:text-white/70 transition-colors"
+            >
               <X className="w-4 h-4" />
-            </Button>
+            </button>
           </div>
           
-          {/* Tools List */}
-          <div className="flex-1 p-3 space-y-1 overflow-y-auto">
+          {/* Tools List - Clean list without icon backgrounds */}
+          <div className="flex-1 py-2">
             {TOOLS.map((tool) => (
               <button
                 key={tool.id}
                 onClick={() => handleToolClick(tool)}
-                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 active:bg-white/10 transition-colors text-left group"
+                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 transition-colors text-left group"
               >
-                <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
-                  <span className={cn("text-xl", tool.color)}>{tool.icon}</span>
-                </div>
-                <span className="text-white/80 text-sm font-medium flex-1">{tool.label}</span>
-                <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-white/40 transition-colors" />
+                <span className={cn("text-lg", tool.color)}>{tool.icon}</span>
+                <span className="text-white/70 text-sm flex-1">{tool.label}</span>
+                <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
               </button>
             ))}
           </div>

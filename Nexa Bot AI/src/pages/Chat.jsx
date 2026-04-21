@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { sendChatMessage, invokeLLM } from "@/lib/api";
+import { sendChatMessage, invokeLLM, signOut } from "@/lib/api";
 import * as storage from "@/lib/storage";
 import Sidebar from "@/components/chat/Sidebar";
 import MessageBubble from "@/components/chat/MessageBubble";
@@ -23,7 +23,7 @@ export default function Chat() {
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
+  
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
 
@@ -117,25 +117,16 @@ export default function Chat() {
     setIsLoading(false);
   };
 
-  // Updated sign out function using Supabase
   const handleSignOut = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error("Sign out error:", error);
-        return;
-      }
-      localStorage.removeItem("nexabot_user_email");
-      window.location.href = "/";
-    } catch (err) {
-      console.error("Unexpected error:", err);
-    }
+    await supabase.auth.signOut();
+    localStorage.removeItem("nexabot_user_email");
+    window.location.reload();
   };
 
   return (
     <AuthGate>
       <div className="flex h-screen bg-[#111111] text-white overflow-hidden">
-
+      
         {/* Sidebar - Fully collapses on desktop, slides on mobile */}
         <div className={`
           fixed lg:relative inset-y-0 left-0 z-50 h-full
@@ -179,13 +170,9 @@ export default function Chat() {
           />
         )}
 
-      {/* Main Chat Area */}
-<div className="flex flex-col flex-1 overflow-hidden w-full">
-  {/* Add a subtle glow to the chat container when active */}
-  <div className="relative">
-    <div className="absolute inset-0 pointer-events-none rounded-lg opacity-30 animate-pulse" />
-  </div>
-
+        {/* Main Chat Area */}
+        <div className="flex flex-col flex-1 overflow-hidden w-full">
+          
           {/* Top bar */}
           <div className="flex items-center justify-between px-6 py-3 border-b border-white/10">
             <button 
@@ -254,22 +241,22 @@ export default function Chat() {
                   {messages.map((msg, i) => (
                     <MessageBubble key={i} message={msg} />
                   ))}
-                  // In your chat component, replace the loading indicator with:
-
-{isLoading && (
-  <div className="flex gap-3 mb-4">
-    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-green-400 flex items-center justify-center shrink-0">
-      <span className="text-black text-xs font-bold">N</span>
-    </div>
-    <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl rounded-bl-none">
-      <div className="typing-indicator">
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
-    </div>
-  </div>
-)}
+                  
+                  {/* Typing Animation - Updated */}
+                  {isLoading && (
+                    <div className="flex gap-3 mb-4">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-green-400 flex items-center justify-center shrink-0">
+                        <span className="text-black text-xs font-bold">N</span>
+                      </div>
+                      <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl rounded-bl-none px-5 py-3">
+                        <div className="flex gap-1.5">
+                          <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                          <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                          <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <div ref={messagesEndRef} />
                 </>
               )}

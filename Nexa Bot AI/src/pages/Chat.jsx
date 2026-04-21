@@ -254,20 +254,22 @@ export default function Chat() {
                   {messages.map((msg, i) => (
                     <MessageBubble key={i} message={msg} />
                   ))}
-                  {isLoading && (
-                    <div className="flex gap-3 mb-4">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-green-400 flex items-center justify-center shrink-0">
-                        <span className="text-black text-xs font-bold">N</span>
-                      </div>
-                      <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl px-4 py-3">
-                        <div className="flex gap-1">
-                          <div className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "0ms" }} />
-                          <div className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "150ms" }} />
-                          <div className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "300ms" }} />
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  // In your chat component, replace the loading indicator with:
+
+{isLoading && (
+  <div className="flex gap-3 mb-4">
+    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-green-400 flex items-center justify-center shrink-0">
+      <span className="text-black text-xs font-bold">N</span>
+    </div>
+    <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl rounded-bl-none">
+      <div className="typing-indicator">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  </div>
+)}
                   <div ref={messagesEndRef} />
                 </>
               )}

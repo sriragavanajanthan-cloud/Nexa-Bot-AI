@@ -95,17 +95,29 @@ export default function AuthGate({ children }) {
     <div className="min-h-screen bg-gradient-to-br from-[#0d0d0d] to-[#1a1a1a] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo Section with Glow */}
-        <div className="flex flex-col items-center mb-8">
-          <div 
-            className="w-24 h-24 rounded-full mb-4 flex items-center justify-center transition-all duration-500"
-            style={{
-              background: 'linear-gradient(135deg, #06b6d4, #10b981)',
-              boxShadow: isHovered ? '0 0 30px rgba(6, 182, 212, 0.6), 0 0 60px rgba(16, 185, 129, 0.3)' : '0 0 10px rgba(6, 182, 212, 0.3)',
-              transition: 'all 0.3s ease'
-            }}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-          >
+<div className="flex flex-col items-center mb-8">
+  <div 
+    className="w-24 h-24 rounded-full mb-4 flex items-center justify-center transition-all duration-500 overflow-hidden"
+    style={{
+      background: 'linear-gradient(135deg, #06b6d4, #10b981)',
+      boxShadow: isHovered ? '0 0 30px rgba(6, 182, 212, 0.6), 0 0 60px rgba(16, 185, 129, 0.3)' : '0 0 10px rgba(6, 182, 212, 0.3)',
+    }}
+    onMouseEnter={() => setIsHovered(true)}
+    onMouseLeave={() => setIsHovered(false)}
+  >
+    <img 
+      src="https://qxgkityhhwgwohehetek.supabase.co/storage/v1/object/public/Nexa/926442f73_NEXAbotAI.png"
+      alt="NEXAbot.AI Logo"
+      className="w-20 h-20 rounded-full object-cover"
+    />
+  </div>
+  <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-green-400 bg-clip-text text-transparent">
+    NEXAbot.AI
+  </h1>
+  <p className="text-white/40 mt-2 text-sm text-center">
+    Sign in to save your chat history
+  </p>
+</div>
             <div className="w-20 h-20 rounded-full bg-[#0d0d0d] flex items-center justify-center">
               <span className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-green-400 bg-clip-text text-transparent">N</span>
             </div>

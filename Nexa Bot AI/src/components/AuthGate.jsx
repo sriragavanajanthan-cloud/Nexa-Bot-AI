@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
-import { Github, Loader2, Mail } from "lucide-react";
+import { Github, Loader2, Mail, Sparkles } from "lucide-react";
 
 export default function AuthGate({ children }) {
   const [user, setUser] = useState(null);
@@ -11,9 +11,6 @@ export default function AuthGate({ children }) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const [isHovered, setIsHovered] = useState(false);
-  const [isGoogleHovered, setIsGoogleHovered] = useState(false);
-  const [isGithubHovered, setIsGithubHovered] = useState(false);
 
   // Check current session on mount
   useEffect(() => {
@@ -80,8 +77,11 @@ export default function AuthGate({ children }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0d0d0d] to-[#1a1a1a] flex items-center justify-center">
-        <div className="text-white/60 animate-pulse">Loading...</div>
+      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] to-[#1a1a1a] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+          <p className="text-white/40 text-sm">Loading...</p>
+        </div>
       </div>
     );
   }
@@ -92,34 +92,13 @@ export default function AuthGate({ children }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0d0d0d] to-[#1a1a1a] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] to-[#1a1a1a] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Logo Section with Glow */}
-<div className="flex flex-col items-center mb-8">
-  <div 
-    className="w-24 h-24 rounded-full mb-4 flex items-center justify-center transition-all duration-500 overflow-hidden"
-    style={{
-      background: 'linear-gradient(135deg, #06b6d4, #10b981)',
-      boxShadow: isHovered ? '0 0 30px rgba(6, 182, 212, 0.6), 0 0 60px rgba(16, 185, 129, 0.3)' : '0 0 10px rgba(6, 182, 212, 0.3)',
-    }}
-    onMouseEnter={() => setIsHovered(true)}
-    onMouseLeave={() => setIsHovered(false)}
-  >
-    <img 
-      src="https://qxgkityhhwgwohehetek.supabase.co/storage/v1/object/public/Nexa/926442f73_NEXAbotAI.png"
-      alt="NEXAbot.AI Logo"
-      className="w-20 h-20 rounded-full object-cover"
-    />
-  </div>
-  <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-green-400 bg-clip-text text-transparent">
-    NEXAbot.AI
-  </h1>
-  <p className="text-white/40 mt-2 text-sm text-center">
-    Sign in to save your chat history
-  </p>
-</div>
-            <div className="w-20 h-20 rounded-full bg-[#0d0d0d] flex items-center justify-center">
-              <span className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-green-400 bg-clip-text text-transparent">N</span>
+        {/* Logo Section */}
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-500 to-green-500 p-0.5 mb-4 shadow-lg shadow-cyan-500/20">
+            <div className="w-full h-full rounded-2xl bg-[#0a0a0a] flex items-center justify-center">
+              <Sparkles className="w-8 h-8 text-cyan-400" />
             </div>
           </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-green-400 bg-clip-text text-transparent">
@@ -130,14 +109,8 @@ export default function AuthGate({ children }) {
           </p>
         </div>
 
-        {/* Auth Card with Glowing Border */}
-        <div 
-          className="bg-[#1a1a1a]/80 backdrop-blur-sm rounded-2xl p-6 space-y-4 transition-all duration-500"
-          style={{
-            border: '1px solid rgba(6, 182, 212, 0.2)',
-            boxShadow: '0 0 20px rgba(6, 182, 212, 0.1), 0 10px 40px rgba(0,0,0,0.3)'
-          }}
-        >
+        {/* Auth Card */}
+        <div className="bg-[#1a1a1a]/80 backdrop-blur-sm border border-white/10 rounded-2xl p-6 space-y-4">
           {/* Magic Link Form */}
           <form onSubmit={sendMagicLink} className="space-y-3">
             <div>
@@ -152,7 +125,7 @@ export default function AuthGate({ children }) {
                 }}
                 placeholder="you@example.com"
                 required
-                className="bg-[#0d0d0d] border-white/10 text-white placeholder:text-white/20 transition-all duration-300 focus:border-cyan-500/50 focus:shadow-[0_0_15px_rgba(6,182,212,0.3)]"
+                className="bg-[#0d0d0d] border-white/10 text-white placeholder:text-white/20 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50"
               />
             </div>
 
@@ -170,16 +143,7 @@ export default function AuthGate({ children }) {
             <Button
               type="submit"
               disabled={sending}
-              className="w-full bg-gradient-to-r from-cyan-500 to-green-400 hover:opacity-90 text-black font-semibold transition-all duration-300"
-              style={{
-                boxShadow: '0 0 10px rgba(6, 182, 212, 0.3)'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = '0 0 25px rgba(6, 182, 212, 0.6)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = '0 0 10px rgba(6, 182, 212, 0.3)';
-              }}
+              className="w-full bg-gradient-to-r from-cyan-500 to-green-500 hover:opacity-90 text-white font-semibold"
             >
               {sending ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -200,15 +164,10 @@ export default function AuthGate({ children }) {
             </div>
           </div>
 
-          {/* Social Buttons with Glow */}
+          {/* Social Buttons */}
           <Button
             onClick={signInWithGoogle}
-            className="w-full bg-white hover:bg-gray-100 text-black font-semibold flex items-center justify-center gap-2 transition-all duration-300"
-            style={{
-              boxShadow: isGoogleHovered ? '0 0 20px rgba(66, 133, 244, 0.5)' : 'none'
-            }}
-            onMouseEnter={() => setIsGoogleHovered(true)}
-            onMouseLeave={() => setIsGoogleHovered(false)}
+            className="w-full bg-white hover:bg-gray-100 text-black font-semibold flex items-center justify-center gap-2"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -221,12 +180,7 @@ export default function AuthGate({ children }) {
 
           <Button
             onClick={signInWithGithub}
-            className="w-full bg-[#24292e] hover:bg-[#1b1f23] text-white font-semibold transition-all duration-300"
-            style={{
-              boxShadow: isGithubHovered ? '0 0 20px rgba(36, 41, 46, 0.5)' : 'none'
-            }}
-            onMouseEnter={() => setIsGithubHovered(true)}
-            onMouseLeave={() => setIsGithubHovered(false)}
+            className="w-full bg-[#24292e] hover:bg-[#1b1f23] text-white font-semibold"
           >
             <Github className="w-4 h-4 mr-2" />
             Continue with GitHub

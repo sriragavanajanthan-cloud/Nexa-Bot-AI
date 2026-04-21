@@ -179,8 +179,12 @@ export default function Chat() {
           />
         )}
 
-        {/* Main Chat Area */}
-        <div className="flex flex-col flex-1 overflow-hidden w-full">
+      {/* Main Chat Area */}
+<div className="flex flex-col flex-1 overflow-hidden w-full">
+  {/* Add a subtle glow to the chat container when active */}
+  <div className="relative">
+    <div className="absolute inset-0 pointer-events-none rounded-lg opacity-30 animate-pulse" />
+  </div>
 
           {/* Top bar */}
           <div className="flex items-center justify-between px-6 py-3 border-b border-white/10">

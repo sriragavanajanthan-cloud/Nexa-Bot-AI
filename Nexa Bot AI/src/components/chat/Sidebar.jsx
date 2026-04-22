@@ -77,8 +77,10 @@ export default function Sidebar({ conversations, currentId, onSelect, onCreate, 
       <div className="flex items-center justify-between p-3 border-b border-white/10">
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/926442f73_NEXAbotAI.png" className="w-7 h-7 rounded-full" alt="logo" />
-            <span className="text-white font-bold text-sm">NEXAbot.AI</span>
+            <img src="https://qxgkityhhwgwohehetek.supabase.co/storage/v1/object/public/Nexa/926442f73_NEXAbotAI.jpg" className="w-7 h-7 rounded-full" alt="logo" />
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-green-400 bg-clip-text text-transparent mb-2">
+                    NEXAbot.AI
+                  </h1>
           </div>
         )}
         {/* Chevron button removed */}

@@ -97,18 +97,18 @@ export default function AuthGate({ children }) {
       <div className="w-full max-w-md">
         {/* Logo Section */}
         <div className="flex flex-col items-center mb-8">
-          <img
-            src={LOGO_URL}
-            alt="NEXAbot.AI"
-            className="w-32 h-32 rounded-full mb-4 object-cover"
-          />
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-green-400 bg-clip-text text-transparent">
-            NEXAbot.AI
-          </h1>
-          <p className="text-white/40 mt-2 text-sm text-center">
-            Sign in to save your chat history
-          </p>
-        </div>
+  <img
+    src={LOGO_URL}
+    alt="NEXAbot.AI"
+    className="w-24 h-24 mb-4 object-contain"
+  />
+  <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-green-400 bg-clip-text text-transparent">
+    NEXAbot.AI
+  </h1>
+  <p className="text-white/40 mt-2 text-sm text-center">
+    Sign in to save your chat history
+  </p>
+</div>
 
         {/* Auth Card */}
         <div className="bg-[#1a1a1a]/80 backdrop-blur-sm border border-white/10 rounded-2xl p-6 space-y-4">

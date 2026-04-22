@@ -4,6 +4,9 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
 import { Github, Loader2, Mail, Sparkles } from "lucide-react";
 
+// Change this to your logo URL
+const LOGO_URL = "https://qxgkityhhwgwohehetek.supabase.co/storage/v1/object/public/Nexa/926442f73_NEXAbotAI.jpg";
+
 export default function AuthGate({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -12,7 +15,6 @@ export default function AuthGate({ children }) {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  // Check current session on mount
   useEffect(() => {
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -22,7 +24,6 @@ export default function AuthGate({ children }) {
 
     getSession();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
@@ -96,11 +97,11 @@ export default function AuthGate({ children }) {
       <div className="w-full max-w-md">
         {/* Logo Section */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-500 to-green-500 p-0.5 mb-4 shadow-lg shadow-cyan-500/20">
-            <div className="w-full h-full rounded-2xl bg-[#0a0a0a] flex items-center justify-center">
-              <Sparkles className="w-8 h-8 text-cyan-400" />
-            </div>
-          </div>
+          <img
+            src={LOGO_URL}
+            alt="NEXAbot.AI"
+            className="w-24 h-24 rounded-full mb-4 object-cover"
+          />
           <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-green-400 bg-clip-text text-transparent">
             NEXAbot.AI
           </h1>
@@ -111,7 +112,6 @@ export default function AuthGate({ children }) {
 
         {/* Auth Card */}
         <div className="bg-[#1a1a1a]/80 backdrop-blur-sm border border-white/10 rounded-2xl p-6 space-y-4">
-          {/* Magic Link Form */}
           <form onSubmit={sendMagicLink} className="space-y-3">
             <div>
               <label className="text-white/50 text-sm block mb-1.5">Email Address</label>
@@ -154,7 +154,6 @@ export default function AuthGate({ children }) {
             </Button>
           </form>
 
-          {/* Divider */}
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-white/10"></div>
@@ -164,7 +163,6 @@ export default function AuthGate({ children }) {
             </div>
           </div>
 
-          {/* Social Buttons */}
           <Button
             onClick={signInWithGoogle}
             className="w-full bg-white hover:bg-gray-100 text-black font-semibold flex items-center justify-center gap-2"

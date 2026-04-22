@@ -71,7 +71,7 @@ export default function Sidebar({ conversations, currentId, onSelect, onCreate, 
   return (
     <div className={cn(
       "flex flex-col bg-[#0d0d0d] border-r border-white/10 transition-all duration-300",
-      collapsed ? "w-14" : "w-64"
+      collapsed ? "w-10" : "w-64"
     )}>
       {/* Header - Chevron button removed */}
       <div className="flex items-center justify-between p-3 border-b border-white/10">

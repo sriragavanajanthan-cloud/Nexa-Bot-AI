@@ -228,7 +228,7 @@ export default function Chat() {
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full min-h-[60vh] text-center">
                   <img
-                    src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/926442f73_NEXAbotAI.png"
+                    src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/926442f73_NEXAbotAI.jpg"
                     alt="NEXAbot.AI"
                     className="w-20 h-20 rounded-full mb-4"
                   />

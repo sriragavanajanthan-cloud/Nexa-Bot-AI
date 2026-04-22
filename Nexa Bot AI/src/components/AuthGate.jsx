@@ -100,7 +100,7 @@ export default function AuthGate({ children }) {
           <img
             src={LOGO_URL}
             alt="NEXAbot.AI"
-            className="w-24 h-24 rounded-full mb-4 object-cover"
+            className="w-32 h-32 rounded-full mb-4 object-cover"
           />
           <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-green-400 bg-clip-text text-transparent">
             NEXAbot.AI

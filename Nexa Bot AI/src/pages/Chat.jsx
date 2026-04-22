@@ -8,7 +8,6 @@ import AuthGate from "@/components/AuthGate";
 import { Sparkles, Zap, Code, BookOpen, LogOut, Menu } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
-
 const SUGGESTED_PROMPTS = [
   { icon: Sparkles, text: "What can you help me with?" },
   { icon: Zap, text: "Write a Python script to sort a list" },
@@ -28,11 +27,17 @@ export default function Chat() {
   const messagesContainerRef = useRef(null);
 
   useEffect(() => {
-    setConversations(storage.getConversations());
+    const loadConversations = async () => {
+      const convs = await storage.getConversations();
+      setConversations(convs);
+    };
+    loadConversations();
   }, []);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages]);
 
   const createNewConversation = () => {
@@ -91,14 +96,21 @@ export default function Chat() {
           prompt: `Create a 2-4 word title for this message: "${text}". Return ONLY the title words, no punctuation, no quotes.`,
         });
         if (result) title = result.trim().slice(0, 50);
-      } catch {}
+      } catch (err) {
+        console.error("Failed to generate title:", err);
+      }
       const conv = storage.createConversation(title);
       convId = conv.id;
       setCurrentConvId(convId);
       setConversations(storage.getConversations());
     }
 
-    const userMsg = { role: "user", content: text, file_urls: fileUrls, timestamp: new Date().toISOString() };
+    const userMsg = { 
+      role: "user", 
+      content: text, 
+      file_urls: fileUrls, 
+      timestamp: new Date().toISOString() 
+    };
     const updatedMessages = [...messages, userMsg];
     setMessages(updatedMessages);
     storage.addMessageToConversation(convId, userMsg);
@@ -106,11 +118,19 @@ export default function Chat() {
 
     try {
       const responseText = await sendChatMessage(updatedMessages);
-      const assistantMsg = { role: "assistant", content: responseText, timestamp: new Date().toISOString() };
+      const assistantMsg = { 
+        role: "assistant", 
+        content: responseText, 
+        timestamp: new Date().toISOString() 
+      };
       setMessages([...updatedMessages, assistantMsg]);
       storage.addMessageToConversation(convId, assistantMsg);
     } catch (err) {
-      const errMsg = { role: "assistant", content: `**Error:** ${err.message}`, timestamp: new Date().toISOString() };
+      const errMsg = { 
+        role: "assistant", 
+        content: `**Error:** ${err.message}`, 
+        timestamp: new Date().toISOString() 
+      };
       setMessages([...updatedMessages, errMsg]);
     }
 
@@ -127,7 +147,7 @@ export default function Chat() {
     <AuthGate>
       <div className="flex h-screen bg-[#111111] text-white overflow-hidden">
       
-        {/* Sidebar - Fully collapses on desktop, slides on mobile */}
+        {/* Sidebar */}
         <div className={`
           fixed lg:relative inset-y-0 left-0 z-50 h-full
           transition-all duration-300 ease-in-out
@@ -143,14 +163,8 @@ export default function Chat() {
               <Sidebar
                 conversations={conversations}
                 currentId={currentConvId}
-                onSelect={(id) => {
-                  selectConversation(id);
-                  setMobileMenuOpen(false);
-                }}
-                onCreate={() => {
-                  createNewConversation();
-                  setMobileMenuOpen(false);
-                }}
+                onSelect={selectConversation}
+                onCreate={createNewConversation}
                 onDelete={deleteConversation}
                 onRename={renameConversation}
                 onPin={pinConversation}
@@ -204,9 +218,8 @@ export default function Chat() {
           {/* Messages - Scrollable Chat List */}
           <div 
             ref={messagesContainerRef}
-            className="flex-1 px-4 py-6"
+            className="flex-1 px-4 py-6 overflow-y-auto"
             style={{ 
-              overflowY: 'auto',
               minHeight: 0,
               WebkitOverflowScrolling: 'touch'
             }}
@@ -231,7 +244,7 @@ export default function Chat() {
                         className="flex items-center gap-2 p-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-left text-sm text-white/70 transition-colors"
                       >
                         <Icon className="w-4 h-4 text-cyan-400 shrink-0" />
-                        <span>{text}</span>
+                        <span className="truncate">{text}</span>
                       </button>
                     ))}
                   </div>
@@ -242,7 +255,7 @@ export default function Chat() {
                     <MessageBubble key={i} message={msg} />
                   ))}
                   
-                  {/* Typing Animation - Updated */}
+                  {/* Typing Animation */}
                   {isLoading && (
                     <div className="flex gap-3 mb-4">
                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-green-400 flex items-center justify-center shrink-0">

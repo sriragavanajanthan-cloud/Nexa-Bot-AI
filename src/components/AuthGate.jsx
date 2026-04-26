@@ -3,9 +3,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
 import { Github, Loader2, Mail, Sparkles } from "lucide-react";
+import { Capacitor } from '@capacitor/core';
 
 // Change this to your logo URL
 const LOGO_URL = "https://qxgkityhhwgwohehetek.supabase.co/storage/v1/object/public/Nexa/926442f73_NEXAbotAI.jpg";
+
+// Get the correct redirect URL based on platform
+const getRedirectUrl = () => {
+  // Check if running inside Capacitor (Android/iOS app)
+  if (Capacitor.isNativePlatform()) {
+    // For Android app, use custom scheme
+    return 'nexabot://auth/callback';
+  } else {
+    // For web (Vercel)
+    return import.meta.env.VITE_REDIRECT_URL || window.location.origin;
+  }
+};
 
 export default function AuthGate({ children }) {
   const [user, setUser] = useState(null);
@@ -42,7 +55,7 @@ export default function AuthGate({ children }) {
     setError("");
     setMessage("");
 
-    const redirectUrl = import.meta.env.VITE_REDIRECT_URL || window.location.origin;
+    const redirectUrl = getRedirectUrl();
 
     const { error: authError } = await supabase.auth.signInWithOtp({
       email: email.trim(),
@@ -61,7 +74,7 @@ export default function AuthGate({ children }) {
   };
 
   const signInWithGoogle = async () => {
-    const redirectUrl = import.meta.env.VITE_REDIRECT_URL || window.location.origin;
+    const redirectUrl = getRedirectUrl();
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: redirectUrl }
@@ -69,7 +82,7 @@ export default function AuthGate({ children }) {
   };
 
   const signInWithGithub = async () => {
-    const redirectUrl = import.meta.env.VITE_REDIRECT_URL || window.location.origin;
+    const redirectUrl = getRedirectUrl();
     await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: { redirectTo: redirectUrl }
@@ -97,18 +110,18 @@ export default function AuthGate({ children }) {
       <div className="w-full max-w-md">
         {/* Logo Section */}
         <div className="flex flex-col items-center mb-8">
-  <img
-    src={LOGO_URL}
-    alt="NEXAbot.AI"
-    className="w-24 h-24 mb-4 object-contain"
-  />
-  <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-green-400 bg-clip-text text-transparent">
-    NEXAbot.AI
-  </h1>
-  <p className="text-white/40 mt-2 text-sm text-center">
-    Sign in to save your chat history
-  </p>
-</div>
+          <img
+            src={LOGO_URL}
+            alt="NEXAbot.AI"
+            className="w-24 h-24 mb-4 object-contain"
+          />
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-green-400 bg-clip-text text-transparent">
+            NEXAbot.AI
+          </h1>
+          <p className="text-white/40 mt-2 text-sm text-center">
+            Sign in to save your chat history
+          </p>
+        </div>
 
         {/* Auth Card */}
         <div className="bg-[#1a1a1a]/80 backdrop-blur-sm border border-white/10 rounded-2xl p-6 space-y-4">

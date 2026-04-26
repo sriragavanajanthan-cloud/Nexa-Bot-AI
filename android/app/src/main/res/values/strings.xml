@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">NEXAbot.AI</string>
+    <string name="title_activity_main">NEXAbot.AI</string>
+    <string name="package_name">com.nexabot.app</string>
+    <string name="custom_url_scheme">com.nexabot.app</string>
+</resources>

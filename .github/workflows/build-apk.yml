@@ -25,7 +25,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '17'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -34,7 +34,7 @@ jobs:
         run: npx cap sync android
 
       - name: Build APK
-        run: |
+        run:  
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug

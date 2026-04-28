@@ -15,8 +15,8 @@ const getRedirectUrl = () => {
     // For Android app, use custom scheme
     return 'nexabot://auth/callback';
   } else {
-    // For web (Vercel)
-    return import.meta.env.VITE_REDIRECT_URL || window.location.origin;
+    // For web (localhost or production) - use the current URL origin
+    return window.location.origin;
   }
 };
 

@@ -34,8 +34,8 @@ const ASPECT_RATIOS = [
   { id: "1:1", label: "1:1 (Square)", width: 1, height: 1 }
 ];
 
-// Engine API URL
-const ENGINE_URL = import.meta.env.VITE_VIDEO_ENGINE_URL || "http://localhost:3000";
+// Backend API URL
+const API_URL = "http://localhost:5001";
 
 export default function VideoGenerator() {
   const [prompt, setPrompt] = useState("");
@@ -50,7 +50,6 @@ export default function VideoGenerator() {
   const [uploadedImage, setUploadedImage] = useState(null);
   const [mode, setMode] = useState("text");
   const [progress, setProgress] = useState(0);
-  const [jobId, setJobId] = useState(null);
   const [error, setError] = useState("");
 
   const generateVideo = async () => {
@@ -66,68 +65,54 @@ export default function VideoGenerator() {
     setGenerating(true);
     setProgress(0);
     setError("");
-    setJobId(null);
     setGeneratedVideo(null);
 
-    const fps = useCustomFPS ? customFPS : selectedQuality.fps;
-    const width = aspectRatio.width === 16 ? 1280 : aspectRatio.width === 9 ? 720 : 720;
-    const height = aspectRatio.height === 9 ? 720 : 1280;
+    // Simulate progress
+    const interval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 90) return prev;
+        return prev + 10;
+      });
+    }, 500);
 
     try {
-      // Start generation job
-      const startRes = await fetch(`${ENGINE_URL}/api/generate`, {
+      // Combine prompt with style
+      const fullPrompt = mode === "text" 
+        ? `${prompt}. ${selectedStyle.prompt}`
+        : prompt;
+      
+      // Call the assemble endpoint
+      const response = await fetch(`${API_URL}/assemble`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          script: mode === "text" ? `${prompt}. ${selectedStyle.prompt}` : prompt,
-          style: selectedStyle.prompt,
-          duration: duration,
-          fps: fps,
-          width: width,
-          height: height,
+        body: JSON.stringify({ 
+          topic: fullPrompt,
           quality: selectedQuality.id,
-          ...(mode === "image" && uploadedImage && { imageUrl: uploadedImage.url })
+          fps: useCustomFPS ? customFPS : selectedQuality.fps,
+          duration: duration,
+          aspectRatio: aspectRatio.id
         })
       });
 
-      if (!startRes.ok) {
-        throw new Error(`Engine error: ${startRes.status}`);
+      const data = await response.json();
+
+      if (response.ok && data.video_url) {
+        setProgress(100);
+        setGeneratedVideo({
+          url: data.video_url,
+          duration: duration,
+          fps: useCustomFPS ? customFPS : selectedQuality.fps,
+          resolution: selectedQuality.resolution,
+          style: selectedStyle.label
+        });
+      } else {
+        setError(data.error || "Failed to generate video");
       }
-
-      const { jobId: newJobId } = await startRes.json();
-      setJobId(newJobId);
-
-      // Poll for completion
-      const pollInterval = setInterval(async () => {
-        try {
-          const statusRes = await fetch(`${ENGINE_URL}/api/status/${newJobId}`);
-          const data = await statusRes.json();
-          
-          setProgress(data.progress || 0);
-          
-          if (data.status === "completed") {
-            clearInterval(pollInterval);
-            setGeneratedVideo({
-              url: data.videoUrl,
-              duration: duration,
-              fps: fps,
-              resolution: selectedQuality.resolution,
-              style: selectedStyle.label
-            });
-            setGenerating(false);
-          } else if (data.status === "failed") {
-            clearInterval(pollInterval);
-            setError(data.error || "Generation failed");
-            setGenerating(false);
-          }
-        } catch (err) {
-          console.error("Polling error:", err);
-        }
-      }, 2000);
-      
     } catch (err) {
       console.error("Generation error:", err);
-      setError(`Failed to connect to engine at ${ENGINE_URL}. Make sure it's running.`);
+      setError(`Failed to connect to backend at ${API_URL}. Make sure it's running.`);
+    } finally {
+      clearInterval(interval);
       setGenerating(false);
     }
   };
@@ -428,9 +413,7 @@ export default function VideoGenerator() {
               style={{ width: `${progress}%` }}
             />
           </div>
-          <p className="text-white/40 text-xs text-center">
-            {jobId ? `Job ID: ${jobId.slice(0, 8)}...` : "Creating your video..."}
-          </p>
+          <p className="text-white/40 text-xs text-center">Searching for matching video...</p>
         </div>
       )}
 

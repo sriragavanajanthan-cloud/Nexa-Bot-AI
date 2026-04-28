@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Brain, ScanSearch, ImageIcon, Wand2, BarChart2, Zap, Film, X, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import MemoryBank from "./MemoryBank";
 import AIDetector from "./AIDetector";
@@ -7,16 +8,16 @@ import ImageVideoGenerator from "./ImageVideoGenerator";
 import ImageEditor from "./ImageEditor";
 import GraphingTool from "./GraphingTool";
 import ImageAmplifier from "./ImageAmplifier";
-import VideoGenerator from "./VideoGenerator";
+import VideoGenerator from "./VideoGenerator"; // Combined AI Video Studio (no separate VideoFinder/VideoAssembler)
 
 const TOOLS = [
-  { id: "memory", label: "Memory Bank", icon: Brain, color: "text-red-400", glowColor: "rgba(248, 113, 113, 0.4)", component: MemoryBank },
-  { id: "aidetect", label: "AI Detector", icon: ScanSearch, color: "text-orange-400", glowColor: "rgba(251, 146, 60, 0.4)", component: AIDetector },
-  { id: "imagegen", label: "Image Generator", icon: ImageIcon, color: "text-yellow-400", glowColor: "rgba(250, 204, 21, 0.4)", component: ImageVideoGenerator },
-  { id: "imageedit", label: "Image Editor", icon: Wand2, color: "text-green-400", glowColor: "rgba(74, 222, 128, 0.4)", component: ImageEditor },
-  { id: "graph", label: "Graphing", icon: BarChart2, color: "text-blue-400", glowColor: "rgba(96, 165, 250, 0.4)", component: GraphingTool },
-  { id: "amplify", label: "Image Amplifier", icon: Zap, color: "text-purple-400", glowColor: "rgba(192, 132, 252, 0.4)", component: ImageAmplifier },
-  { id: "videogen", label: "Video Generator", icon: Film, color: "text-pink-400", glowColor: "rgba(244, 114, 182, 0.4)", component: VideoGenerator },
+  { id: "memory", label: "Memory Bank", icon: Brain, color: "text-red-400", component: MemoryBank },
+  { id: "aidetect", label: "AI Detector", icon: ScanSearch, color: "text-orange-400", component: AIDetector },
+  { id: "imagegen", label: "Image Generator", icon: ImageIcon, color: "text-yellow-400", component: ImageVideoGenerator },
+  { id: "imageedit", label: "Image Editor", icon: Wand2, color: "text-green-400", component: ImageEditor },
+  { id: "graph", label: "Graphing", icon: BarChart2, color: "text-blue-400", component: GraphingTool },
+  { id: "amplify", label: "Image Amplifier", icon: Zap, color: "text-purple-400", component: ImageAmplifier },
+  { id: "videogen", label: "AI Video Studio", icon: Film, color: "text-purple-400", component: VideoGenerator },
 ];
 
 // Modal Component for Tools
@@ -44,23 +45,18 @@ function ToolModal({ tool, onClose }) {
   return (
     <div 
       className={cn(
-        "fixed inset-0 z-50 transition-all duration-300",
+        "fixed inset-0 z-50 bg-black/70 transition-all duration-300",
         isMobile ? "flex items-end" : "flex items-center justify-center"
       )}
-      style={{ background: 'rgba(0, 0, 0, 0.8)' }}
       onClick={onClose}
     >
       <div 
         className={cn(
-          "bg-[#1a1a1a] shadow-2xl overflow-hidden transition-all duration-300",
+          "bg-[#1a1a1a] border-white/10 shadow-2xl overflow-hidden transition-all duration-300",
           isMobile 
             ? "w-full rounded-t-2xl max-h-[90vh] animate-slide-up" 
-            : "relative w-full max-w-4xl max-h-[85vh] rounded-xl"
+            : "relative w-full max-w-4xl max-h-[85vh] rounded-xl border"
         )}
-        style={{ 
-          border: `1px solid ${tool.glowColor}`,
-          boxShadow: `0 0 20px ${tool.glowColor}, 0 0 40px rgba(0,0,0,0.5)`
-        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
@@ -89,7 +85,6 @@ function ToolModal({ tool, onClose }) {
 export default function ToolsPanel({ onClose }) {
   const [activeTool, setActiveTool] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
-  const [hoveredTool, setHoveredTool] = useState(null);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -124,29 +119,19 @@ export default function ToolsPanel({ onClose }) {
             </button>
           </div>
           
-          {/* Tools List with Glow on Hover */}
+          {/* Tools List - All original tools + combined Video Studio */}
           <div className="flex-1 py-3">
             {TOOLS.map((tool) => {
               const Icon = tool.icon;
-              const isHovered = hoveredTool === tool.id;
               return (
                 <button
                   key={tool.id}
                   onClick={() => handleToolClick(tool)}
-                  onMouseEnter={() => setHoveredTool(tool.id)}
-                  onMouseLeave={() => setHoveredTool(null)}
-                  className="w-full flex items-center gap-4 px-5 py-3 transition-all duration-300 text-left group"
-                  style={{
-                    backgroundColor: isHovered ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
-                    boxShadow: isHovered ? `0 0 15px ${tool.glowColor}` : 'none',
-                    borderLeft: isHovered ? `3px solid ${tool.color.replace('text-', '').replace('-400', '')}` : '3px solid transparent'
-                  }}
+                  className="w-full flex items-center gap-4 px-5 py-3 hover:bg-white/5 transition-colors text-left group"
                 >
-                  <Icon className={cn("w-5 h-5 transition-all duration-300", tool.color, isHovered && "scale-110")} />
-                  <span className="text-white/80 text-base flex-1 transition-colors duration-300" style={{ color: isHovered ? 'white' : 'rgba(255,255,255,0.8)' }}>
-                    {tool.label}
-                  </span>
-                  <ChevronRight className={cn("w-4 h-4 transition-all duration-300", isHovered ? "text-white/60 translate-x-1" : "text-white/20")} />
+                  <Icon className={cn("w-5 h-5", tool.color)} />
+                  <span className="text-white/80 text-base flex-1">{tool.label}</span>
+                  <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/50 transition-colors" />
                 </button>
               );
             })}

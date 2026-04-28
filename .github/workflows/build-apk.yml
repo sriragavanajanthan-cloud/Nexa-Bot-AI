@@ -17,14 +17,10 @@ jobs:
           node-version: '22'
 
       - name: Install dependencies
-        run: |
-          cd NexaBotAI
-          npm install
+        run: npm install
 
       - name: Build web app
-        run: |
-          cd NexaBotAI
-          npm run build
+        run: npm run build
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -36,13 +32,11 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Sync Capacitor
-        run: |
-          cd NexaBotAI
-          npx cap sync android
+        run: npx cap sync android
 
       - name: Build APK
         run: |
-          cd NexaBotAI/android
+          cd android
           chmod +x gradlew
           ./gradlew assembleDebug
 
@@ -50,4 +44,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: NexaBotAI/android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk

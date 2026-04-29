@@ -1,13 +1,15 @@
-# Ignore everything Python
+# Hide entire backend folders
+.render-only/
+venv/
+
+# Ignore all Python files anywhere
 **/*.py
 **/*.pyc
 **/__pycache__/
-**/venv/
-**/backend/
 **/requirements.txt
 **/render.yaml
 
-# Ignore local files
+# Ignore other files
 .gitignore
 README.md
 .DS_Store
@@ -16,7 +18,5 @@ ffmpeg.zip
 *.mp4
 *.mp3
 temp_*
-venv/
 node_modules/
 dist/
-render-only/

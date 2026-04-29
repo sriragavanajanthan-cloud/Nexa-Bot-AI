@@ -19,3 +19,4 @@ temp_*
 venv/
 node_modules/
 dist/
+render-only/

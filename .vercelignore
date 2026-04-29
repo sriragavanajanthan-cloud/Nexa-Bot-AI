@@ -1,0 +1,21 @@
+# Python backend files (for Render only)
+backend/
+venv/
+*.py
+*.pyc
+__pycache__/
+requirements.txt
+render.yaml
+
+# Other files to ignore
+.gitignore
+README.md
+.DS_Store
+*.log
+ffmpeg
+ffmpeg.zip
+*.mp4
+*.mp3
+temp_*
+venv/
+node_modules/

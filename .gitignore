@@ -47,3 +47,4 @@ ffmpeg.zip
 *.mp3
 temp_*
 technology_video.mp4
+venv/

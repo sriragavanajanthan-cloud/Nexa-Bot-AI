@@ -1,17 +1,16 @@
-# Python backend files (for Render only)
-backend/
-venv/
-*.py
-*.pyc
-__pycache__/
-requirements.txt
-render.yaml
+# Ignore everything Python
+**/*.py
+**/*.pyc
+**/__pycache__/
+**/venv/
+**/backend/
+**/requirements.txt
+**/render.yaml
 
-# Other files to ignore
+# Ignore local files
 .gitignore
 README.md
 .DS_Store
-*.log
 ffmpeg
 ffmpeg.zip
 *.mp4
@@ -19,3 +18,4 @@ ffmpeg.zip
 temp_*
 venv/
 node_modules/
+dist/

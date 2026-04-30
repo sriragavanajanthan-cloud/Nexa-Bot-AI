@@ -2,15 +2,10 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "installCommand": "npm install",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
+  "framework": "vite",
   "functions": {
-    "backend/**/*.py": {
-      "runtime": "disabled"
-    },
-    "**/*.py": {
-      "runtime": "disabled"
+    "api/*.py": {
+      "runtime": "python3.9"
     }
   }
 }

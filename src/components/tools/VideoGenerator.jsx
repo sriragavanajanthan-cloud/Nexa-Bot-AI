@@ -35,7 +35,7 @@ const ASPECT_RATIOS = [
 ];
 
 // Backend API URL
-const API_URL = "http://localhost:5001";
+const API_URL = "https://nexabot-video-api.onrender.com";
 
 export default function VideoGenerator() {
   const [prompt, setPrompt] = useState("");

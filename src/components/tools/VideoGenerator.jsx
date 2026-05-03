@@ -6,7 +6,7 @@ import {
   Video, Sparkles, Settings, Film, 
   Loader2, Download, RefreshCw, 
   Sliders, Zap, Clock, Crop,
-  Wand2, Volume2, Image as ImageIcon
+  Wand2, Image as ImageIcon
 } from "lucide-react";
 
 // Video quality presets
@@ -46,13 +46,17 @@ export default function VideoGenerator() {
   const [customFPS, setCustomFPS] = useState(24);
   const [useCustomFPS, setUseCustomFPS] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [loadingOptions, setLoadingOptions] = useState(false);
   const [generatedVideo, setGeneratedVideo] = useState(null);
+  const [videoOptions, setVideoOptions] = useState([]);
+  const [selectedOption, setSelectedOption] = useState(null);
   const [uploadedImage, setUploadedImage] = useState(null);
   const [mode, setMode] = useState("text");
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
 
-  const generateVideo = async () => {
+  // Step 1: Fetch video options based on the user's prompt
+  const fetchVideoOptions = async () => {
     if (!prompt.trim() && mode === "text") {
       setError("Please describe your video");
       return;
@@ -62,12 +66,48 @@ export default function VideoGenerator() {
       return;
     }
 
+    setLoadingOptions(true);
+    setError("");
+    setVideoOptions([]);
+    setSelectedOption(null);
+    setGeneratedVideo(null);
+
+    const fullPrompt = mode === "text" 
+      ? `${prompt}. ${selectedStyle.prompt}`
+      : prompt;
+
+    try {
+      const response = await fetch(`${API_URL}/options`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          topic: fullPrompt,
+          max_options: 6
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.options && data.options.length > 0) {
+        setVideoOptions(data.options);
+      } else {
+        setError("No videos found for your description. Try different keywords.");
+      }
+    } catch (err) {
+      console.error("Error fetching options:", err);
+      setError(`Failed to connect to backend at ${API_URL}. Make sure it's running.`);
+    } finally {
+      setLoadingOptions(false);
+    }
+  };
+
+  // Step 2: Assemble the selected video
+  const assembleSelectedVideo = async (videoUrl, optionId) => {
     setGenerating(true);
     setProgress(0);
     setError("");
     setGeneratedVideo(null);
 
-    // Simulate progress
     const interval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 90) return prev;
@@ -76,20 +116,19 @@ export default function VideoGenerator() {
     }, 500);
 
     try {
-      // Combine prompt with style
       const fullPrompt = mode === "text" 
         ? `${prompt}. ${selectedStyle.prompt}`
         : prompt;
-      
-      // Call the assemble endpoint
+
       const response = await fetch(`${API_URL}/assemble`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           topic: fullPrompt,
+          video_url: videoUrl,
+          duration: duration,
           quality: selectedQuality.id,
           fps: useCustomFPS ? customFPS : selectedQuality.fps,
-          duration: duration,
           aspectRatio: aspectRatio.id
         })
       });
@@ -105,12 +144,13 @@ export default function VideoGenerator() {
           resolution: selectedQuality.resolution,
           style: selectedStyle.label
         });
+        setSelectedOption(optionId);
       } else {
         setError(data.error || "Failed to generate video");
       }
     } catch (err) {
-      console.error("Generation error:", err);
-      setError(`Failed to connect to backend at ${API_URL}. Make sure it's running.`);
+      console.error("Assembly error:", err);
+      setError(`Failed to connect to backend at ${API_URL}.`);
     } finally {
       clearInterval(interval);
       setGenerating(false);
@@ -132,9 +172,12 @@ export default function VideoGenerator() {
     }
   };
 
-  const regenerate = () => {
+  const resetAll = () => {
+    setPrompt("");
+    setVideoOptions([]);
+    setSelectedOption(null);
     setGeneratedVideo(null);
-    generateVideo();
+    setError("");
   };
 
   const getGenerationTime = () => {
@@ -154,7 +197,7 @@ export default function VideoGenerator() {
         </div>
         <div>
           <h2 className="text-xl font-bold text-white">AI Video Generator</h2>
-          <p className="text-white/40 text-sm">Create cinematic videos with AI</p>
+          <p className="text-white/40 text-sm">Find and assemble stock videos</p>
         </div>
       </div>
 
@@ -222,8 +265,8 @@ export default function VideoGenerator() {
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder={mode === "text" 
-            ? "A cinematic shot of a futuristic city at night, neon lights reflecting on wet streets, slow camera pan..."
-            : "The character slowly turns and looks at the camera, dramatic lighting, cinematic reveal..."
+            ? "A cinematic shot of a futuristic city at night, neon lights reflecting on wet streets..."
+            : "The character slowly turns and looks at the camera, dramatic lighting..."
           }
           className="bg-[#1a1a1a] border-white/10 text-white resize-none min-h-[100px]"
         />
@@ -381,30 +424,61 @@ export default function VideoGenerator() {
 
       {/* Generation Info */}
       <div className="bg-[#1a1a1a] rounded-lg p-3 flex items-center justify-between text-sm">
-        <span className="text-white/40">Estimated generation time</span>
+        <span className="text-white/40">Estimated processing time</span>
         <span className="text-white/60">~{getGenerationTime()} seconds</span>
       </div>
 
-      {/* Generate Button */}
-      <Button
-        onClick={generateVideo}
-        disabled={generating || (mode === "text" ? !prompt.trim() : !uploadedImage)}
-        className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 text-white font-semibold py-6"
-      >
-        {generating ? (
-          <>
-            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-            Generating... {progress}%
-          </>
-        ) : (
-          <>
-            <Wand2 className="w-5 h-5 mr-2" />
-            Generate Video
-          </>
-        )}
-      </Button>
+      {/* Find Video Options Button */}
+      {!videoOptions.length && !loadingOptions && !generating && !generatedVideo && (
+        <Button
+          onClick={fetchVideoOptions}
+          disabled={loadingOptions || (mode === "text" ? !prompt.trim() : !uploadedImage)}
+          className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 text-white font-semibold py-6"
+        >
+          {loadingOptions ? (
+            <>
+              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+              Finding videos...
+            </>
+          ) : (
+            <>
+              <Wand2 className="w-5 h-5 mr-2" />
+              Find Video Options
+            </>
+          )}
+        </Button>
+      )}
 
-      {/* Progress Bar */}
+      {/* Video Options Selection */}
+      {videoOptions.length > 0 && !generating && !generatedVideo && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-white font-semibold">Choose a video clip:</h3>
+            <button onClick={resetAll} className="text-white/40 text-sm hover:text-white/60">
+              Clear & Start Over
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto">
+            {videoOptions.map((opt) => (
+              <div
+                key={opt.id}
+                onClick={() => assembleSelectedVideo(opt.url, opt.id)}
+                className={`bg-[#1a1a1a] border rounded-lg p-3 cursor-pointer transition-colors ${
+                  selectedOption === opt.id
+                    ? "border-green-500 bg-green-500/10"
+                    : "border-white/10 hover:border-purple-500"
+                }`}
+              >
+                <div className="text-white text-sm font-medium">Option {opt.id}</div>
+                <div className="text-white/40 text-xs">Duration: {opt.duration}s</div>
+                <div className="text-white/40 text-xs truncate">Tags: {opt.tags}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Assembly Progress */}
       {generating && (
         <div className="space-y-2">
           <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
@@ -413,7 +487,7 @@ export default function VideoGenerator() {
               style={{ width: `${progress}%` }}
             />
           </div>
-          <p className="text-white/40 text-xs text-center">Searching for matching video...</p>
+          <p className="text-white/40 text-xs text-center">Assembling your video...</p>
         </div>
       )}
 
@@ -423,7 +497,7 @@ export default function VideoGenerator() {
           <div className="flex items-center justify-between">
             <h3 className="text-white font-semibold">Generated Video</h3>
             <div className="flex gap-2">
-              <button onClick={regenerate} className="p-2 rounded-lg text-white/40 hover:text-white hover:bg-white/10">
+              <button onClick={resetAll} className="p-2 rounded-lg text-white/40 hover:text-white hover:bg-white/10">
                 <RefreshCw className="w-4 h-4" />
               </button>
               <button onClick={downloadVideo} className="p-2 rounded-lg text-white/40 hover:text-white hover:bg-white/10">

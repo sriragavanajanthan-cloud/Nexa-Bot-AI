@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -6,7 +6,7 @@ import {
   Video, Sparkles, Settings, Film, 
   Loader2, Download, RefreshCw, 
   Sliders, Zap, Clock, Crop,
-  Wand2, Image as ImageIcon
+  Wand2, Image as ImageIcon, X, Music, Type
 } from "lucide-react";
 
 // Video quality presets
@@ -34,8 +34,36 @@ const ASPECT_RATIOS = [
   { id: "1:1", label: "1:1 (Square)", width: 1, height: 1 }
 ];
 
+// Music options
+const MUSIC_OPTIONS = [
+  { id: "none", name: "No Music", url: null },
+  { id: "upbeat", name: "🎵 Upbeat", url: "/music/upbeat.mp3" },
+  { id: "cinematic", name: "🎬 Cinematic", url: "/music/cinematic.mp3" },
+  { id: "calm", name: "🌊 Calm", url: "/music/calm.mp3" }
+];
+
 // Backend API URL
 const API_URL = "https://nexabot-video-api.onrender.com";
+
+// Loading Skeleton Component
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-3">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="bg-[#1a1a1a] border border-white/10 rounded-lg p-3 animate-pulse">
+          <div className="flex gap-3">
+            <div className="w-20 h-12 bg-white/10 rounded"></div>
+            <div className="flex-1 space-y-2">
+              <div className="h-4 bg-white/10 rounded w-24"></div>
+              <div className="h-3 bg-white/10 rounded w-32"></div>
+              <div className="h-3 bg-white/10 rounded w-40"></div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function VideoGenerator() {
   const [prompt, setPrompt] = useState("");
@@ -49,27 +77,26 @@ export default function VideoGenerator() {
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [generatedVideo, setGeneratedVideo] = useState(null);
   const [videoOptions, setVideoOptions] = useState([]);
-  const [selectedOption, setSelectedOption] = useState(null);
   const [uploadedImage, setUploadedImage] = useState(null);
   const [mode, setMode] = useState("text");
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
+  const [selectedMusic, setSelectedMusic] = useState(MUSIC_OPTIONS[0]);
+  const [textOverlay, setTextOverlay] = useState("");
+  const [showTextOverlay, setShowTextOverlay] = useState(false);
+  
+  const abortControllerRef = useRef(null);
 
-  // Step 1: Fetch video options based on the user's prompt
+  // Fetch video options
   const fetchVideoOptions = async () => {
     if (!prompt.trim() && mode === "text") {
       setError("Please describe your video");
-      return;
-    }
-    if (!uploadedImage && mode === "image") {
-      setError("Please upload an image");
       return;
     }
 
     setLoadingOptions(true);
     setError("");
     setVideoOptions([]);
-    setSelectedOption(null);
     setGeneratedVideo(null);
 
     const fullPrompt = mode === "text" 
@@ -91,22 +118,34 @@ export default function VideoGenerator() {
       if (data.options && data.options.length > 0) {
         setVideoOptions(data.options);
       } else {
-        setError("No videos found for your description. Try different keywords.");
+        setError("No videos found. Try different keywords.");
       }
     } catch (err) {
-      console.error("Error fetching options:", err);
-      setError(`Failed to connect to backend at ${API_URL}. Make sure it's running.`);
+      setError(`Failed to connect to backend.`);
     } finally {
       setLoadingOptions(false);
     }
   };
 
-  // Step 2: Assemble the selected video
-  const assembleSelectedVideo = async (videoUrl, optionId) => {
+  // Cancel generation
+  const cancelGeneration = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      setGenerating(false);
+      setProgress(0);
+      setError("Generation cancelled");
+    }
+  };
+
+  // Assemble selected video
+  const assembleSelectedVideo = async (videoUrl) => {
     setGenerating(true);
     setProgress(0);
     setError("");
     setGeneratedVideo(null);
+    setVideoOptions([]);
+    
+    abortControllerRef.current = new AbortController();
 
     const interval = setInterval(() => {
       setProgress(prev => {
@@ -129,8 +168,11 @@ export default function VideoGenerator() {
           duration: duration,
           quality: selectedQuality.id,
           fps: useCustomFPS ? customFPS : selectedQuality.fps,
-          aspectRatio: aspectRatio.id
-        })
+          aspectRatio: aspectRatio.id,
+          music: selectedMusic.url,
+          text_overlay: showTextOverlay ? textOverlay : null
+        }),
+        signal: abortControllerRef.current.signal
       });
 
       const data = await response.json();
@@ -144,16 +186,17 @@ export default function VideoGenerator() {
           resolution: selectedQuality.resolution,
           style: selectedStyle.label
         });
-        setSelectedOption(optionId);
       } else {
-        setError(data.error || "Failed to generate video");
+        setError(data.error || "Failed to assemble video");
       }
     } catch (err) {
-      console.error("Assembly error:", err);
-      setError(`Failed to connect to backend at ${API_URL}.`);
+      if (err.name !== 'AbortError') {
+        setError(`Failed to assemble video`);
+      }
     } finally {
       clearInterval(interval);
       setGenerating(false);
+      abortControllerRef.current = null;
     }
   };
 
@@ -175,9 +218,10 @@ export default function VideoGenerator() {
   const resetAll = () => {
     setPrompt("");
     setVideoOptions([]);
-    setSelectedOption(null);
     setGeneratedVideo(null);
     setError("");
+    setTextOverlay("");
+    setShowTextOverlay(false);
   };
 
   const getGenerationTime = () => {
@@ -196,8 +240,8 @@ export default function VideoGenerator() {
           <Film className="w-6 h-6 text-white" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-white">AI Video Generator</h2>
-          <p className="text-white/40 text-sm">Find and assemble stock videos</p>
+          <h2 className="text-xl font-bold text-white">AI Video Studio</h2>
+          <p className="text-white/40 text-sm">Create videos with AI</p>
         </div>
       </div>
 
@@ -264,168 +308,98 @@ export default function VideoGenerator() {
         <Textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder={mode === "text" 
-            ? "A cinematic shot of a futuristic city at night, neon lights reflecting on wet streets..."
-            : "The character slowly turns and looks at the camera, dramatic lighting..."
-          }
+          placeholder="A cinematic shot of a futuristic city at night, neon lights reflecting on wet streets..."
           className="bg-[#1a1a1a] border-white/10 text-white resize-none min-h-[100px]"
         />
       </div>
 
-      {/* Error Message */}
-      {error && (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-          <p className="text-red-400 text-sm">{error}</p>
-        </div>
+      {/* Text Overlay Toggle */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => setShowTextOverlay(!showTextOverlay)}
+          className={`flex items-center gap-2 px-3 py-1 rounded-lg text-sm transition-colors ${
+            showTextOverlay ? "bg-purple-500 text-white" : "bg-white/5 text-white/60"
+          }`}
+        >
+          <Type className="w-4 h-4" />
+          Add Text Overlay
+        </button>
+      </div>
+
+      {/* Text Overlay Input */}
+      {showTextOverlay && (
+        <Input
+          value={textOverlay}
+          onChange={(e) => setTextOverlay(e.target.value)}
+          placeholder="Enter text to display on video..."
+          className="bg-[#1a1a1a] border-white/10 text-white"
+        />
       )}
 
-      {/* Quality Presets */}
-      <div className="space-y-3">
+      {/* Background Music */}
+      <div className="space-y-2">
         <label className="text-white/70 text-sm font-medium flex items-center gap-2">
-          <Sliders className="w-4 h-4 text-purple-400" />
-          Quality & Speed
+          <Music className="w-4 h-4 text-purple-400" />
+          Background Music
         </label>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {QUALITY_PRESETS.map((quality) => {
-            const Icon = quality.icon;
-            const isSelected = selectedQuality.id === quality.id && !useCustomFPS;
-            return (
-              <button
-                key={quality.id}
-                onClick={() => {
-                  setSelectedQuality(quality);
-                  setUseCustomFPS(false);
-                }}
-                className={`p-3 rounded-xl border transition-all text-left ${
-                  isSelected
-                    ? "border-purple-500 bg-purple-500/10"
-                    : "border-white/10 hover:border-white/20"
-                }`}
-              >
-                <Icon className={`w-4 h-4 mb-2 ${isSelected ? "text-purple-400" : "text-white/40"}`} />
-                <div className="text-white text-sm font-medium">{quality.label}</div>
-                <div className="text-white/40 text-xs">{quality.resolution} • {quality.fps} fps</div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Advanced Settings */}
-      <div className="bg-[#1a1a1a] rounded-xl p-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <label className="text-white/70 text-sm font-medium flex items-center gap-2">
-            <Settings className="w-4 h-4 text-purple-400" />
-            Advanced Settings
-          </label>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="flex items-center justify-between">
-            <span className="text-white/60 text-sm">Custom Frame Rate</span>
+        <div className="flex gap-2 flex-wrap">
+          {MUSIC_OPTIONS.map((music) => (
             <button
-              onClick={() => setUseCustomFPS(!useCustomFPS)}
+              key={music.id}
+              onClick={() => setSelectedMusic(music)}
               className={`px-3 py-1 rounded-lg text-sm transition-colors ${
-                useCustomFPS 
-                  ? "bg-purple-500 text-white" 
-                  : "bg-white/10 text-white/60"
-              }`}
-            >
-              {useCustomFPS ? "Custom" : "Auto"}
-            </button>
-          </div>
-
-          {useCustomFPS && (
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-white/60 text-sm">FPS</span>
-                <span className="text-purple-400 text-sm font-medium">{customFPS} fps</span>
-              </div>
-              <input
-                type="range"
-                min="12"
-                max="60"
-                step="1"
-                value={customFPS}
-                onChange={(e) => setCustomFPS(parseInt(e.target.value))}
-                className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-purple-500"
-              />
-              <div className="flex justify-between text-white/30 text-xs">
-                <span>Cinematic (24)</span>
-                <span>Standard (30)</span>
-                <span>High (48-60)</span>
-              </div>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-white/60 text-sm flex items-center gap-1">
-                <Clock className="w-3 h-3" /> Duration
-              </span>
-              <span className="text-purple-400 text-sm font-medium">{duration} seconds</span>
-            </div>
-            <input
-              type="range"
-              min="2"
-              max="10"
-              step="1"
-              value={duration}
-              onChange={(e) => setDuration(parseInt(e.target.value))}
-              className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-purple-500"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <span className="text-white/60 text-sm flex items-center gap-1">
-              <Crop className="w-3 h-3" /> Aspect Ratio
-            </span>
-            <div className="flex gap-2">
-              {ASPECT_RATIOS.map((ratio) => (
-                <button
-                  key={ratio.id}
-                  onClick={() => setAspectRatio(ratio)}
-                  className={`flex-1 py-2 rounded-lg text-sm transition-colors ${
-                    aspectRatio.id === ratio.id
-                      ? "bg-purple-500/20 text-purple-400 border border-purple-500/30"
-                      : "bg-white/5 text-white/60 hover:bg-white/10"
-                  }`}
-                >
-                  {ratio.id}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Video Styles */}
-      <div className="space-y-3">
-        <label className="text-white/70 text-sm font-medium flex items-center gap-2">
-          <Film className="w-4 h-4 text-purple-400" />
-          Video Style
-        </label>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {VIDEO_STYLES.map((style) => (
-            <button
-              key={style.id}
-              onClick={() => setSelectedStyle(style)}
-              className={`p-2 rounded-lg text-sm transition-colors ${
-                selectedStyle.id === style.id
-                  ? "bg-purple-500/20 text-purple-400 border border-purple-500/30"
+                selectedMusic.id === music.id
+                  ? "bg-purple-500 text-white"
                   : "bg-white/5 text-white/60 hover:bg-white/10"
               }`}
             >
-              {style.label}
+              {music.name}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Generation Info */}
-      <div className="bg-[#1a1a1a] rounded-lg p-3 flex items-center justify-between text-sm">
-        <span className="text-white/40">Estimated processing time</span>
-        <span className="text-white/60">~{getGenerationTime()} seconds</span>
+      {/* Quality Presets (condensed) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {QUALITY_PRESETS.map((quality) => {
+          const Icon = quality.icon;
+          const isSelected = selectedQuality.id === quality.id && !useCustomFPS;
+          return (
+            <button
+              key={quality.id}
+              onClick={() => {
+                setSelectedQuality(quality);
+                setUseCustomFPS(false);
+              }}
+              className={`p-2 rounded-xl border transition-all text-center ${
+                isSelected
+                  ? "border-purple-500 bg-purple-500/10"
+                  : "border-white/10 hover:border-white/20"
+              }`}
+            >
+              <Icon className={`w-4 h-4 mx-auto mb-1 ${isSelected ? "text-purple-400" : "text-white/40"}`} />
+              <div className="text-white text-xs font-medium">{quality.label}</div>
+              <div className="text-white/40 text-[10px]">{quality.resolution}</div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Duration Slider */}
+      <div className="space-y-2">
+        <div className="flex justify-between text-sm">
+          <span className="text-white/60">Duration: {duration}s</span>
+          <span className="text-purple-400">~{getGenerationTime()}s est.</span>
+        </div>
+        <input
+          type="range"
+          min="2"
+          max="10"
+          step="1"
+          value={duration}
+          onChange={(e) => setDuration(parseInt(e.target.value))}
+          className="w-full accent-purple-500"
+        />
       </div>
 
       {/* Find Video Options Button */}
@@ -433,7 +407,7 @@ export default function VideoGenerator() {
         <Button
           onClick={fetchVideoOptions}
           disabled={loadingOptions || (mode === "text" ? !prompt.trim() : !uploadedImage)}
-          className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 text-white font-semibold py-6"
+          className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold py-6"
         >
           {loadingOptions ? (
             <>
@@ -449,7 +423,10 @@ export default function VideoGenerator() {
         </Button>
       )}
 
-      {/* Video Options Selection */}
+      {/* Loading Skeletons */}
+      {loadingOptions && <LoadingSkeleton />}
+
+      {/* Video Options with Thumbnails */}
       {videoOptions.length > 0 && !generating && !generatedVideo && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -458,36 +435,45 @@ export default function VideoGenerator() {
               Clear & Start Over
             </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto">
+          <div className="grid grid-cols-1 gap-3 max-h-96 overflow-y-auto">
             {videoOptions.map((opt) => (
               <div
                 key={opt.id}
-                onClick={() => assembleSelectedVideo(opt.url, opt.id)}
-                className={`bg-[#1a1a1a] border rounded-lg p-3 cursor-pointer transition-colors ${
-                  selectedOption === opt.id
-                    ? "border-green-500 bg-green-500/10"
-                    : "border-white/10 hover:border-purple-500"
-                }`}
+                onClick={() => assembleSelectedVideo(opt.url)}
+                className="bg-[#1a1a1a] border border-white/10 rounded-lg p-3 cursor-pointer hover:border-purple-500 transition-colors flex gap-3"
               >
-                <div className="text-white text-sm font-medium">Option {opt.id}</div>
-                <div className="text-white/40 text-xs">Duration: {opt.duration}s</div>
-                <div className="text-white/40 text-xs truncate">Tags: {opt.tags}</div>
+                <div className="w-24 h-14 bg-[#0d0d0d] rounded overflow-hidden flex-shrink-0">
+                  <div className="w-full h-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                    <Film className="w-6 h-6 text-white/40" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="text-white text-sm font-medium">Option {opt.id}</div>
+                  <div className="text-white/40 text-xs">Duration: {opt.duration}s</div>
+                  <div className="text-white/40 text-xs truncate">Tags: {opt.tags}</div>
+                </div>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Assembly Progress */}
+      {/* Assembly Progress with Cancel */}
       {generating && (
-        <div className="space-y-2">
+        <div className="space-y-3">
+          <div className="flex justify-between text-sm">
+            <span className="text-white/40">Assembling video...</span>
+            <span className="text-purple-400">~{Math.ceil((100 - progress) / 10)}s remaining</span>
+          </div>
           <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
             <div 
-              className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 transition-all duration-300"
+              className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
           </div>
-          <p className="text-white/40 text-xs text-center">Assembling your video...</p>
+          <Button onClick={cancelGeneration} variant="outline" className="w-full border-red-500/50 text-red-400 hover:bg-red-500/10">
+            Cancel Generation
+          </Button>
         </div>
       )}
 
@@ -513,14 +499,11 @@ export default function VideoGenerator() {
               <div className="text-center">
                 <Film className="w-12 h-12 text-white/20 mx-auto mb-2" />
                 <p className="text-white/40 text-sm">Video Preview</p>
-                <p className="text-white/30 text-xs mt-1">
-                  {duration}s • {generatedVideo.fps} fps • {generatedVideo.resolution}
-                </p>
               </div>
             )}
           </div>
           
-          <div className="flex gap-4 text-sm">
+          <div className="flex gap-4 text-sm flex-wrap">
             <div>
               <span className="text-white/40">Style:</span>
               <span className="text-white/80 ml-2">{generatedVideo.style}</span>

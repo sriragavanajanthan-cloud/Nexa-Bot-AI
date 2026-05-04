@@ -5,16 +5,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { 
   Video, Sparkles, Settings, Film, 
   Loader2, Download, RefreshCw, 
-  Sliders, Zap, Clock, Crop,
+  Sliders, Zap, Crop,
   Wand2, Image as ImageIcon, Music, Type
 } from "lucide-react";
 
 // Video quality presets
 const QUALITY_PRESETS = [
-  { id: "draft", label: "Draft", resolution: "540p", fps: 24, speed: "fast", icon: Zap },
-  { id: "standard", label: "Standard", resolution: "720p", fps: 24, speed: "medium", icon: Video },
-  { id: "hd", label: "HD", resolution: "1080p", fps: 30, speed: "slow", icon: Settings },
-  { id: "cinematic", label: "Cinematic", resolution: "1080p", fps: 48, speed: "slower", icon: Film }
+  { id: "draft", label: "Draft", resolution: "540p", speed: "fast", icon: Zap },
+  { id: "standard", label: "Standard", resolution: "720p", speed: "medium", icon: Video },
+  { id: "hd", label: "HD", resolution: "1080p", speed: "slow", icon: Settings },
+  { id: "cinematic", label: "Cinematic", resolution: "1080p", speed: "slower", icon: Film }
 ];
 
 // Video styles
@@ -71,8 +71,6 @@ export default function VideoGenerator() {
   const [selectedStyle, setSelectedStyle] = useState(VIDEO_STYLES[0]);
   const [aspectRatio, setAspectRatio] = useState(ASPECT_RATIOS[0]);
   const [duration, setDuration] = useState(5);
-  const [customFPS, setCustomFPS] = useState(24);
-  const [useCustomFPS, setUseCustomFPS] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [generatedVideo, setGeneratedVideo] = useState(null);
@@ -167,7 +165,6 @@ export default function VideoGenerator() {
           video_url: videoUrl,
           duration: duration,
           quality: selectedQuality.id,
-          fps: useCustomFPS ? customFPS : selectedQuality.fps,
           aspectRatio: aspectRatio.id,
           style: selectedStyle.id,
           music: selectedMusic.url,
@@ -183,7 +180,6 @@ export default function VideoGenerator() {
         setGeneratedVideo({
           url: data.video_url,
           duration: duration,
-          fps: useCustomFPS ? customFPS : selectedQuality.fps,
           resolution: selectedQuality.resolution,
           style: selectedStyle.label
         });
@@ -229,8 +225,7 @@ export default function VideoGenerator() {
     const baseTime = duration * 2;
     const qualityFactor = selectedQuality.id === "draft" ? 0.5 : 
                          selectedQuality.id === "cinematic" ? 2 : 1;
-    const fpsFactor = (useCustomFPS ? customFPS : selectedQuality.fps) / 24;
-    return Math.round(baseTime * qualityFactor * fpsFactor);
+    return Math.round(baseTime * qualityFactor);
   };
 
   return (
@@ -334,67 +329,23 @@ export default function VideoGenerator() {
         </div>
       </div>
 
-      {/* Quality & FPS */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label className="text-white/70 text-sm font-medium">📹 Quality</label>
-          <div className="grid grid-cols-2 gap-2">
-            {QUALITY_PRESETS.map((quality) => (
-              <button
-                key={quality.id}
-                onClick={() => {
-                  setSelectedQuality(quality);
-                  setUseCustomFPS(false);
-                }}
-                className={`p-2 rounded-lg text-xs transition-colors ${
-                  selectedQuality.id === quality.id && !useCustomFPS
-                    ? "bg-purple-500 text-white"
-                    : "bg-white/5 text-white/60 hover:bg-white/10"
-                }`}
-              >
-                {quality.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-white/70 text-sm font-medium">⚡ FPS</label>
-          <div className="flex gap-2">
+      {/* Quality */}
+      <div className="space-y-2">
+        <label className="text-white/70 text-sm font-medium">📹 Quality</label>
+        <div className="grid grid-cols-4 gap-2">
+          {QUALITY_PRESETS.map((quality) => (
             <button
-              onClick={() => setUseCustomFPS(false)}
-              className={`flex-1 p-2 rounded-lg text-xs transition-colors ${
-                !useCustomFPS
+              key={quality.id}
+              onClick={() => setSelectedQuality(quality)}
+              className={`p-2 rounded-lg text-xs transition-colors ${
+                selectedQuality.id === quality.id
                   ? "bg-purple-500 text-white"
                   : "bg-white/5 text-white/60 hover:bg-white/10"
               }`}
             >
-              Auto ({selectedQuality.fps})
+              {quality.label}
             </button>
-            <button
-              onClick={() => setUseCustomFPS(true)}
-              className={`flex-1 p-2 rounded-lg text-xs transition-colors ${
-                useCustomFPS
-                  ? "bg-purple-500 text-white"
-                  : "bg-white/5 text-white/60 hover:bg-white/10"
-              }`}
-            >
-              Custom
-            </button>
-          </div>
-          {useCustomFPS && (
-            <div className="space-y-1">
-              <input
-                type="range"
-                min="12"
-                max="60"
-                value={customFPS}
-                onChange={(e) => setCustomFPS(parseInt(e.target.value))}
-                className="w-full accent-purple-500"
-              />
-              <div className="text-center text-purple-400 text-xs">{customFPS} fps</div>
-            </div>
-          )}
+          ))}
         </div>
       </div>
 
@@ -420,15 +371,14 @@ export default function VideoGenerator() {
         </div>
 
         <div className="space-y-2">
-          <label className="text-white/70 text-sm font-medium">⏱️ Duration: {duration}s</label>
-          <input
-            type="range"
+          <label className="text-white/70 text-sm font-medium">⏱️ Duration (seconds)</label>
+          <Input
+            type="number"
             min="2"
             max="10"
-            step="1"
             value={duration}
-            onChange={(e) => setDuration(parseInt(e.target.value))}
-            className="w-full accent-purple-500"
+            onChange={(e) => setDuration(parseInt(e.target.value) || 5)}
+            className="bg-[#1a1a1a] border-white/10 text-white"
           />
         </div>
       </div>
@@ -593,10 +543,6 @@ export default function VideoGenerator() {
             <div>
               <span className="text-white/40">Duration:</span>
               <span className="text-white/80 ml-2">{generatedVideo.duration}s</span>
-            </div>
-            <div>
-              <span className="text-white/40">FPS:</span>
-              <span className="text-white/80 ml-2">{generatedVideo.fps}</span>
             </div>
             <div>
               <span className="text-white/40">Resolution:</span>

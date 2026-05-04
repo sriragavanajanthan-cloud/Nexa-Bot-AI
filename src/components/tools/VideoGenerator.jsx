@@ -6,7 +6,7 @@ import {
   Video, Sparkles, Settings, Film, 
   Loader2, Download, RefreshCw, 
   Sliders, Zap, Clock, Crop,
-  Wand2, Image as ImageIcon, X, Music, Type
+  Wand2, Image as ImageIcon, Music, Type
 } from "lucide-react";
 
 // Video quality presets
@@ -169,6 +169,7 @@ export default function VideoGenerator() {
           quality: selectedQuality.id,
           fps: useCustomFPS ? customFPS : selectedQuality.fps,
           aspectRatio: aspectRatio.id,
+          style: selectedStyle.id,
           music: selectedMusic.url,
           text_overlay: showTextOverlay ? textOverlay : null
         }),
@@ -313,7 +314,126 @@ export default function VideoGenerator() {
         />
       </div>
 
-      {/* Text Overlay Toggle */}
+      {/* Style Selection */}
+      <div className="space-y-2">
+        <label className="text-white/70 text-sm font-medium">🎨 Video Style</label>
+        <div className="grid grid-cols-3 gap-2">
+          {VIDEO_STYLES.map((style) => (
+            <button
+              key={style.id}
+              onClick={() => setSelectedStyle(style)}
+              className={`p-2 rounded-lg text-xs transition-colors ${
+                selectedStyle.id === style.id
+                  ? "bg-purple-500 text-white"
+                  : "bg-white/5 text-white/60 hover:bg-white/10"
+              }`}
+            >
+              {style.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Quality & FPS */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label className="text-white/70 text-sm font-medium">📹 Quality</label>
+          <div className="grid grid-cols-2 gap-2">
+            {QUALITY_PRESETS.map((quality) => (
+              <button
+                key={quality.id}
+                onClick={() => {
+                  setSelectedQuality(quality);
+                  setUseCustomFPS(false);
+                }}
+                className={`p-2 rounded-lg text-xs transition-colors ${
+                  selectedQuality.id === quality.id && !useCustomFPS
+                    ? "bg-purple-500 text-white"
+                    : "bg-white/5 text-white/60 hover:bg-white/10"
+                }`}
+              >
+                {quality.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-white/70 text-sm font-medium">⚡ FPS</label>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setUseCustomFPS(false)}
+              className={`flex-1 p-2 rounded-lg text-xs transition-colors ${
+                !useCustomFPS
+                  ? "bg-purple-500 text-white"
+                  : "bg-white/5 text-white/60 hover:bg-white/10"
+              }`}
+            >
+              Auto ({selectedQuality.fps})
+            </button>
+            <button
+              onClick={() => setUseCustomFPS(true)}
+              className={`flex-1 p-2 rounded-lg text-xs transition-colors ${
+                useCustomFPS
+                  ? "bg-purple-500 text-white"
+                  : "bg-white/5 text-white/60 hover:bg-white/10"
+              }`}
+            >
+              Custom
+            </button>
+          </div>
+          {useCustomFPS && (
+            <div className="space-y-1">
+              <input
+                type="range"
+                min="12"
+                max="60"
+                value={customFPS}
+                onChange={(e) => setCustomFPS(parseInt(e.target.value))}
+                className="w-full accent-purple-500"
+              />
+              <div className="text-center text-purple-400 text-xs">{customFPS} fps</div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Aspect Ratio & Duration */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label className="text-white/70 text-sm font-medium">📐 Aspect Ratio</label>
+          <div className="flex gap-2">
+            {ASPECT_RATIOS.map((ratio) => (
+              <button
+                key={ratio.id}
+                onClick={() => setAspectRatio(ratio)}
+                className={`flex-1 p-2 rounded-lg text-xs transition-colors ${
+                  aspectRatio.id === ratio.id
+                    ? "bg-purple-500 text-white"
+                    : "bg-white/5 text-white/60 hover:bg-white/10"
+                }`}
+              >
+                {ratio.id}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-white/70 text-sm font-medium">⏱️ Duration: {duration}s</label>
+          <input
+            type="range"
+            min="2"
+            max="10"
+            step="1"
+            value={duration}
+            onChange={(e) => setDuration(parseInt(e.target.value))}
+            className="w-full accent-purple-500"
+          />
+        </div>
+      </div>
+
+      {/* Text Overlay */}
       <div className="flex items-center gap-2">
         <button
           onClick={() => setShowTextOverlay(!showTextOverlay)}
@@ -326,7 +446,6 @@ export default function VideoGenerator() {
         </button>
       </div>
 
-      {/* Text Overlay Input */}
       {showTextOverlay && (
         <Input
           value={textOverlay}
@@ -359,47 +478,10 @@ export default function VideoGenerator() {
         </div>
       </div>
 
-      {/* Quality Presets (condensed) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        {QUALITY_PRESETS.map((quality) => {
-          const Icon = quality.icon;
-          const isSelected = selectedQuality.id === quality.id && !useCustomFPS;
-          return (
-            <button
-              key={quality.id}
-              onClick={() => {
-                setSelectedQuality(quality);
-                setUseCustomFPS(false);
-              }}
-              className={`p-2 rounded-xl border transition-all text-center ${
-                isSelected
-                  ? "border-purple-500 bg-purple-500/10"
-                  : "border-white/10 hover:border-white/20"
-              }`}
-            >
-              <Icon className={`w-4 h-4 mx-auto mb-1 ${isSelected ? "text-purple-400" : "text-white/40"}`} />
-              <div className="text-white text-xs font-medium">{quality.label}</div>
-              <div className="text-white/40 text-[10px]">{quality.resolution}</div>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Duration Slider */}
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span className="text-white/60">Duration: {duration}s</span>
-          <span className="text-purple-400">~{getGenerationTime()}s est.</span>
-        </div>
-        <input
-          type="range"
-          min="2"
-          max="10"
-          step="1"
-          value={duration}
-          onChange={(e) => setDuration(parseInt(e.target.value))}
-          className="w-full accent-purple-500"
-        />
+      {/* Estimated time */}
+      <div className="bg-[#1a1a1a] rounded-lg p-3 flex items-center justify-between text-sm">
+        <span className="text-white/40">Estimated processing time</span>
+        <span className="text-purple-400">~{getGenerationTime()} seconds</span>
       </div>
 
       {/* Find Video Options Button */}
@@ -426,7 +508,7 @@ export default function VideoGenerator() {
       {/* Loading Skeletons */}
       {loadingOptions && <LoadingSkeleton />}
 
-      {/* Video Options with Thumbnails */}
+      {/* Video Options */}
       {videoOptions.length > 0 && !generating && !generatedVideo && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -458,7 +540,7 @@ export default function VideoGenerator() {
         </div>
       )}
 
-      {/* Assembly Progress with Cancel */}
+      {/* Progress */}
       {generating && (
         <div className="space-y-3">
           <div className="flex justify-between text-sm">
@@ -511,6 +593,10 @@ export default function VideoGenerator() {
             <div>
               <span className="text-white/40">Duration:</span>
               <span className="text-white/80 ml-2">{generatedVideo.duration}s</span>
+            </div>
+            <div>
+              <span className="text-white/40">FPS:</span>
+              <span className="text-white/80 ml-2">{generatedVideo.fps}</span>
             </div>
             <div>
               <span className="text-white/40">Resolution:</span>

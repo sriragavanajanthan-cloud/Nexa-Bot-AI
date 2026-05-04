@@ -9,43 +9,38 @@ import {
   Wand2, Image as ImageIcon, Music, Type
 } from "lucide-react";
 
-// Video quality presets
 const QUALITY_PRESETS = [
-  { id: "draft", label: "Draft", resolution: "540p", speed: "fast", icon: Zap },
-  { id: "standard", label: "Standard", resolution: "720p", speed: "medium", icon: Video },
-  { id: "hd", label: "HD", resolution: "1080p", speed: "slow", icon: Settings },
-  { id: "cinematic", label: "Cinematic", resolution: "1080p", speed: "slower", icon: Film }
+  { id: "draft", label: "Draft", resolution: "540p", icon: Zap },
+  { id: "standard", label: "Standard", resolution: "720p", icon: Video },
+  { id: "hd", label: "HD", resolution: "1080p", icon: Settings },
+  { id: "cinematic", label: "Cinematic", resolution: "1080p", icon: Film }
 ];
 
-// Video styles
 const VIDEO_STYLES = [
-  { id: "cinematic", label: "Cinematic", prompt: "cinematic lighting, shallow depth of field, film grain, dramatic mood" },
-  { id: "realistic", label: "Realistic", prompt: "photorealistic, natural lighting, sharp details, authentic textures" },
-  { id: "anime", label: "Anime", prompt: "anime style, cel-shaded, vibrant colors, Japanese animation aesthetic" },
-  { id: "cyberpunk", label: "Cyberpunk", prompt: "cyberpunk, neon lights, dark cityscape, futuristic, high contrast" },
-  { id: "vintage", label: "Vintage", prompt: "vintage film, warm tones, grain, retro aesthetic, 80s style" },
-  { id: "fantasy", label: "Fantasy", prompt: "fantasy, magical, ethereal, soft lighting, dreamlike atmosphere" }
+  { id: "cinematic", label: "Cinematic", prompt: "cinematic lighting, dramatic mood" },
+  { id: "realistic", label: "Realistic", prompt: "photorealistic, natural lighting" },
+  { id: "anime", label: "Anime", prompt: "anime style, vibrant colors" },
+  { id: "cyberpunk", label: "Cyberpunk", prompt: "cyberpunk, neon lights" },
+  { id: "vintage", label: "Vintage", prompt: "vintage film, retro aesthetic" },
+  { id: "fantasy", label: "Fantasy", prompt: "fantasy, magical, ethereal" }
 ];
 
-// Aspect ratios
 const ASPECT_RATIOS = [
-  { id: "16:9", label: "16:9 (Landscape)", width: 16, height: 9 },
-  { id: "9:16", label: "9:16 (Portrait)", width: 9, height: 16 },
-  { id: "1:1", label: "1:1 (Square)", width: 1, height: 1 }
+  { id: "16:9", label: "16:9", width: 16, height: 9 },
+  { id: "9:16", label: "9:16", width: 9, height: 16 },
+  { id: "1:1", label: "1:1", width: 1, height: 1 }
 ];
 
-// Music options
-const MUSIC_OPTIONS = [
-  { id: "none", name: "No Music", url: null },
-  { id: "upbeat", name: "🎵 Upbeat", url: "/music/upbeat.mp3" },
-  { id: "cinematic", name: "🎬 Cinematic", url: "/music/cinematic.mp3" },
-  { id: "calm", name: "🌊 Calm", url: "/music/calm.mp3" }
+const MUSIC_MOODS = [
+  { id: "upbeat", name: "🎵 Upbeat", icon: "⚡" },
+  { id: "cinematic", name: "🎬 Cinematic", icon: "🎬" },
+  { id: "calm", name: "🌊 Calm", icon: "🌊" },
+  { id: "inspiring", name: "✨ Inspiring", icon: "✨" },
+  { id: "corporate", name: "💼 Corporate", icon: "💼" }
 ];
 
-// Backend API URL
 const API_URL = "https://nexabot-video-api.onrender.com";
 
-// Loading Skeleton Component
 function LoadingSkeleton() {
   return (
     <div className="space-y-3">
@@ -56,7 +51,6 @@ function LoadingSkeleton() {
             <div className="flex-1 space-y-2">
               <div className="h-4 bg-white/10 rounded w-24"></div>
               <div className="h-3 bg-white/10 rounded w-32"></div>
-              <div className="h-3 bg-white/10 rounded w-40"></div>
             </div>
           </div>
         </div>
@@ -70,8 +64,7 @@ export default function VideoGenerator() {
   const [selectedQuality, setSelectedQuality] = useState(QUALITY_PRESETS[1]);
   const [selectedStyle, setSelectedStyle] = useState(VIDEO_STYLES[0]);
   const [aspectRatio, setAspectRatio] = useState(ASPECT_RATIOS[0]);
-  const [durationMinutes, setDurationMinutes] = useState(0);
-  const [durationSeconds, setDurationSeconds] = useState(5);
+  const [duration, setDuration] = useState(5);
   const [generating, setGenerating] = useState(false);
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [generatedVideo, setGeneratedVideo] = useState(null);
@@ -80,33 +73,17 @@ export default function VideoGenerator() {
   const [mode, setMode] = useState("text");
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
-  const [selectedMusic, setSelectedMusic] = useState(MUSIC_OPTIONS[0]);
   const [textOverlay, setTextOverlay] = useState("");
   const [showTextOverlay, setShowTextOverlay] = useState(false);
   
+  // Music states
+  const [musicTracks, setMusicTracks] = useState([]);
+  const [searchingMusic, setSearchingMusic] = useState(false);
+  const [selectedMood, setSelectedMood] = useState("upbeat");
+  const [selectedTrack, setSelectedTrack] = useState(null);
+  
   const abortControllerRef = useRef(null);
 
-  // Calculate total duration in seconds (max 30 seconds for Render memory safety)
-  const getTotalDuration = () => {
-    let total = (durationMinutes * 60) + durationSeconds;
-    // Enforce 30 second max for Render's 512MB RAM limit
-    if (total > 30) {
-      return 30;
-    }
-    return total;
-  };
-
-  const getDisplayDuration = () => {
-    const total = getTotalDuration();
-    const mins = Math.floor(total / 60);
-    const secs = total % 60;
-    if (mins > 0) {
-      return `${mins}m ${secs}s (max 30s)`;
-    }
-    return `${secs}s (max 30s)`;
-  };
-
-  // Fetch video options
   const fetchVideoOptions = async () => {
     if (!prompt.trim() && mode === "text") {
       setError("Please describe your video");
@@ -126,10 +103,7 @@ export default function VideoGenerator() {
       const response = await fetch(`${API_URL}/options`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          topic: fullPrompt,
-          max_options: 6
-        })
+        body: JSON.stringify({ topic: fullPrompt, max_options: 6 })
       });
 
       const data = await response.json();
@@ -146,7 +120,32 @@ export default function VideoGenerator() {
     }
   };
 
-  // Cancel generation
+  const searchMusicByMood = async (mood) => {
+    setSelectedMood(mood);
+    setSearchingMusic(true);
+    setMusicTracks([]);
+    setSelectedTrack(null);
+    
+    try {
+      const response = await fetch(`${API_URL}/search-music`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mood: mood })
+      });
+      
+      const data = await response.json();
+      if (data.tracks && data.tracks.length > 0) {
+        setMusicTracks(data.tracks);
+      } else {
+        console.log("No music found for this mood");
+      }
+    } catch (err) {
+      console.error("Failed to load music:", err);
+    } finally {
+      setSearchingMusic(false);
+    }
+  };
+
   const cancelGeneration = () => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -156,16 +155,10 @@ export default function VideoGenerator() {
     }
   };
 
-  // Assemble selected video
   const assembleSelectedVideo = async (videoUrl) => {
-    let totalDuration = getTotalDuration();
-    if (totalDuration < 2) {
-      setError("Duration must be at least 2 seconds");
+    if (duration < 2 || duration > 30) {
+      setError("Duration must be between 2 and 30 seconds");
       return;
-    }
-    if (totalDuration > 30) {
-      setError("Duration limited to 30 seconds for optimal performance");
-      totalDuration = 30;
     }
 
     setGenerating(true);
@@ -194,11 +187,11 @@ export default function VideoGenerator() {
         body: JSON.stringify({ 
           topic: fullPrompt,
           video_url: videoUrl,
-          duration: totalDuration,
+          duration: duration,
           quality: selectedQuality.id,
           aspectRatio: aspectRatio.id,
           style: selectedStyle.id,
-          music: selectedMusic.url,
+          music: selectedTrack?.url || null,
           text_overlay: showTextOverlay ? textOverlay : null
         }),
         signal: abortControllerRef.current.signal
@@ -210,7 +203,7 @@ export default function VideoGenerator() {
         setProgress(100);
         setGeneratedVideo({
           url: data.video_url,
-          duration: totalDuration,
+          duration: duration,
           resolution: selectedQuality.resolution,
           style: selectedStyle.label
         });
@@ -250,54 +243,26 @@ export default function VideoGenerator() {
     setError("");
     setTextOverlay("");
     setShowTextOverlay(false);
-    setDurationMinutes(0);
-    setDurationSeconds(5);
+    setSelectedTrack(null);
+    setMusicTracks([]);
   };
 
   const getGenerationTime = () => {
-    const totalDuration = getTotalDuration();
-    const baseTime = totalDuration * 2;
+    const baseTime = duration * 2;
     const qualityFactor = selectedQuality.id === "draft" ? 0.5 : 
                          selectedQuality.id === "cinematic" ? 2 : 1;
     return Math.round(baseTime * qualityFactor);
   };
 
-  const formatDurationDisplay = () => {
-    const total = getTotalDuration();
-    const mins = Math.floor(total / 60);
-    const secs = total % 60;
-    if (mins > 0) {
-      return `${mins}m ${secs}s`;
-    }
-    return `${secs}s`;
-  };
-
-  // Handle duration changes with limits
-  const handleMinutesChange = (val) => {
-    let newMinutes = parseInt(val) || 0;
-    if (newMinutes > 0) {
-      newMinutes = 0; // Force to 0, only seconds allowed
-    }
-    setDurationMinutes(newMinutes);
-  };
-
-  const handleSecondsChange = (val) => {
-    let newSeconds = parseInt(val) || 0;
-    if (newSeconds < 2) newSeconds = 2;
-    if (newSeconds > 30) newSeconds = 30;
-    setDurationSeconds(newSeconds);
-  };
-
   return (
     <div className="p-6 space-y-6 max-w-4xl mx-auto">
-      {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <div className="p-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500">
           <Film className="w-6 h-6 text-white" />
         </div>
         <div>
           <h2 className="text-xl font-bold text-white">AI Video Studio</h2>
-          <p className="text-white/40 text-sm">Create videos with AI (max 30s for performance)</p>
+          <p className="text-white/40 text-sm">Create videos with AI (max 30s)</p>
         </div>
       </div>
 
@@ -305,25 +270,19 @@ export default function VideoGenerator() {
       <div className="flex gap-2 bg-[#1a1a1a] rounded-xl p-1">
         <button
           onClick={() => setMode("text")}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-colors ${
-            mode === "text" 
-              ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white" 
-              : "text-white/60 hover:text-white/80"
+          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+            mode === "text" ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white" : "text-white/60"
           }`}
         >
-          <Wand2 className="w-4 h-4" />
-          Text to Video
+          <Wand2 className="w-4 h-4 inline mr-2" /> Text to Video
         </button>
         <button
           onClick={() => setMode("image")}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-colors ${
-            mode === "image" 
-              ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white" 
-              : "text-white/60 hover:text-white/80"
+          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+            mode === "image" ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white" : "text-white/60"
           }`}
         >
-          <ImageIcon className="w-4 h-4" />
-          Image to Video
+          <ImageIcon className="w-4 h-4 inline mr-2" /> Image to Video
         </button>
       </div>
 
@@ -331,7 +290,7 @@ export default function VideoGenerator() {
       {mode === "image" && (
         <div 
           onClick={() => document.getElementById("image-upload").click()}
-          className="border-2 border-dashed border-white/20 rounded-xl p-8 text-center cursor-pointer hover:border-purple-500/50 transition-colors"
+          className="border-2 border-dashed border-white/20 rounded-xl p-8 text-center cursor-pointer hover:border-purple-500/50"
         >
           {uploadedImage ? (
             <div className="space-y-3">
@@ -348,7 +307,7 @@ export default function VideoGenerator() {
             <>
               <ImageIcon className="w-12 h-12 text-white/30 mx-auto mb-3" />
               <p className="text-white/60 text-sm">Click to upload an image</p>
-              <p className="text-white/30 text-xs mt-1">PNG, JPG, WEBP up to 10MB</p>
+              <p className="text-white/30 text-xs">PNG, JPG, WEBP up to 10MB</p>
             </>
           )}
           <input id="image-upload" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
@@ -359,7 +318,7 @@ export default function VideoGenerator() {
       <div className="space-y-2">
         <label className="text-white/70 text-sm font-medium flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-purple-400" />
-          {mode === "text" ? "Describe your video" : "Describe the animation"}
+          Describe your video
         </label>
         <Textarea
           value={prompt}
@@ -378,9 +337,7 @@ export default function VideoGenerator() {
               key={style.id}
               onClick={() => setSelectedStyle(style)}
               className={`p-2 rounded-lg text-xs transition-colors ${
-                selectedStyle.id === style.id
-                  ? "bg-purple-500 text-white"
-                  : "bg-white/5 text-white/60 hover:bg-white/10"
+                selectedStyle.id === style.id ? "bg-purple-500 text-white" : "bg-white/5 text-white/60 hover:bg-white/10"
               }`}
             >
               {style.label}
@@ -398,9 +355,7 @@ export default function VideoGenerator() {
               key={quality.id}
               onClick={() => setSelectedQuality(quality)}
               className={`p-2 rounded-lg text-xs transition-colors ${
-                selectedQuality.id === quality.id
-                  ? "bg-purple-500 text-white"
-                  : "bg-white/5 text-white/60 hover:bg-white/10"
+                selectedQuality.id === quality.id ? "bg-purple-500 text-white" : "bg-white/5 text-white/60 hover:bg-white/10"
               }`}
             >
               {quality.label}
@@ -419,9 +374,7 @@ export default function VideoGenerator() {
                 key={ratio.id}
                 onClick={() => setAspectRatio(ratio)}
                 className={`flex-1 p-2 rounded-lg text-xs transition-colors ${
-                  aspectRatio.id === ratio.id
-                    ? "bg-purple-500 text-white"
-                    : "bg-white/5 text-white/60 hover:bg-white/10"
+                  aspectRatio.id === ratio.id ? "bg-purple-500 text-white" : "bg-white/5 text-white/60 hover:bg-white/10"
                 }`}
               >
                 {ratio.id}
@@ -432,36 +385,14 @@ export default function VideoGenerator() {
 
         <div className="space-y-2">
           <label className="text-white/70 text-sm font-medium">⏱️ Duration (2-30 sec)</label>
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <Input
-                type="number"
-                min="0"
-                max="0"
-                value={durationMinutes}
-                onChange={(e) => handleMinutesChange(e.target.value)}
-                className="bg-[#1a1a1a] border-white/10 text-white text-center"
-                placeholder="Min"
-                disabled
-              />
-              <div className="text-white/40 text-xs text-center mt-1">Minutes (disabled)</div>
-            </div>
-            <div className="flex-1">
-              <Input
-                type="number"
-                min="2"
-                max="30"
-                value={durationSeconds}
-                onChange={(e) => handleSecondsChange(e.target.value)}
-                className="bg-[#1a1a1a] border-white/10 text-white text-center"
-                placeholder="Sec"
-              />
-              <div className="text-white/40 text-xs text-center mt-1">Seconds (2-30)</div>
-            </div>
-          </div>
-          <div className="text-center text-purple-400 text-xs">
-            Total: {formatDurationDisplay()} (max 30s)
-          </div>
+          <Input
+            type="number"
+            min="2"
+            max="30"
+            value={duration}
+            onChange={(e) => setDuration(Math.min(30, Math.max(2, parseInt(e.target.value) || 5)))}
+            className="bg-[#1a1a1a] border-white/10 text-white"
+          />
         </div>
       </div>
 
@@ -473,8 +404,7 @@ export default function VideoGenerator() {
             showTextOverlay ? "bg-purple-500 text-white" : "bg-white/5 text-white/60"
           }`}
         >
-          <Type className="w-4 h-4" />
-          Add Text Overlay
+          <Type className="w-4 h-4" /> Add Text Overlay
         </button>
       </div>
 
@@ -487,27 +417,76 @@ export default function VideoGenerator() {
         />
       )}
 
-      {/* Background Music */}
-      <div className="space-y-2">
-        <label className="text-white/70 text-sm font-medium flex items-center gap-2">
-          <Music className="w-4 h-4 text-purple-400" />
-          Background Music
-        </label>
+      {/* Background Music with Mood Search */}
+      <div className="space-y-3">
+        <label className="text-white/70 text-sm font-medium">🎵 Background Music</label>
+        
         <div className="flex gap-2 flex-wrap">
-          {MUSIC_OPTIONS.map((music) => (
+          {MUSIC_MOODS.map((mood) => (
             <button
-              key={music.id}
-              onClick={() => setSelectedMusic(music)}
-              className={`px-3 py-1 rounded-lg text-sm transition-colors ${
-                selectedMusic.id === music.id
+              key={mood.id}
+              onClick={() => searchMusicByMood(mood.id)}
+              className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                selectedMood === mood.id && !selectedTrack
                   ? "bg-purple-500 text-white"
                   : "bg-white/5 text-white/60 hover:bg-white/10"
               }`}
             >
-              {music.name}
+              {mood.name}
             </button>
           ))}
         </div>
+        
+        {searchingMusic && (
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="w-5 h-5 text-purple-400 animate-spin" />
+            <span className="ml-2 text-white/40 text-sm">Finding music...</span>
+          </div>
+        )}
+        
+        {musicTracks.length > 0 && !selectedTrack && (
+          <div className="space-y-2 max-h-48 overflow-y-auto">
+            <p className="text-white/40 text-xs">Select a track:</p>
+            {musicTracks.map((track) => (
+              <div
+                key={track.id}
+                onClick={() => setSelectedTrack(track)}
+                className="bg-[#1a1a1a] border border-white/10 rounded-lg p-2 cursor-pointer hover:border-purple-500 transition-colors"
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <div className="text-white text-sm font-medium">{track.title}</div>
+                    <div className="text-white/30 text-xs">{track.artist} • {Math.floor(track.duration)}s</div>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(track.url, '_blank');
+                    }}
+                    className="text-white/40 hover:text-white text-xs px-2 py-1 rounded bg-white/5"
+                  >
+                    Preview
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {selectedTrack && (
+          <div className="bg-purple-500/20 border border-purple-500/30 rounded-lg p-2 flex items-center justify-between">
+            <div>
+              <span className="text-purple-400 text-sm">🎵 {selectedTrack.title}</span>
+              <span className="text-white/40 text-xs ml-2">({Math.floor(selectedTrack.duration)}s)</span>
+            </div>
+            <button
+              onClick={() => setSelectedTrack(null)}
+              className="text-white/40 hover:text-white text-xs px-2 py-1 rounded bg-white/5"
+            >
+              Change
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Estimated time */}
@@ -524,15 +503,9 @@ export default function VideoGenerator() {
           className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold py-6"
         >
           {loadingOptions ? (
-            <>
-              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-              Finding videos...
-            </>
+            <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Finding videos...</>
           ) : (
-            <>
-              <Wand2 className="w-5 h-5 mr-2" />
-              Find Video Options
-            </>
+            <><Wand2 className="w-5 h-5 mr-2" /> Find Video Options</>
           )}
         </Button>
       )}
@@ -545,9 +518,7 @@ export default function VideoGenerator() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-white font-semibold">Choose a video clip:</h3>
-            <button onClick={resetAll} className="text-white/40 text-sm hover:text-white/60">
-              Clear & Start Over
-            </button>
+            <button onClick={resetAll} className="text-white/40 text-sm hover:text-white/60">Clear & Start Over</button>
           </div>
           <div className="grid grid-cols-1 gap-3 max-h-96 overflow-y-auto">
             {videoOptions.map((opt) => (
@@ -580,10 +551,7 @@ export default function VideoGenerator() {
             <span className="text-purple-400">~{Math.ceil((100 - progress) / 10)}s remaining</span>
           </div>
           <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
-            <div 
-              className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 transition-all duration-500"
-              style={{ width: `${progress}%` }}
-            />
+            <div className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 transition-all duration-500" style={{ width: `${progress}%` }} />
           </div>
           <Button onClick={cancelGeneration} variant="outline" className="w-full border-red-500/50 text-red-400 hover:bg-red-500/10">
             Cancel Generation
@@ -618,18 +586,9 @@ export default function VideoGenerator() {
           </div>
           
           <div className="flex gap-4 text-sm flex-wrap">
-            <div>
-              <span className="text-white/40">Style:</span>
-              <span className="text-white/80 ml-2">{generatedVideo.style}</span>
-            </div>
-            <div>
-              <span className="text-white/40">Duration:</span>
-              <span className="text-white/80 ml-2">{generatedVideo.duration}s</span>
-            </div>
-            <div>
-              <span className="text-white/40">Resolution:</span>
-              <span className="text-white/80 ml-2">{generatedVideo.resolution}</span>
-            </div>
+            <div><span className="text-white/40">Style:</span> <span className="text-white/80 ml-2">{generatedVideo.style}</span></div>
+            <div><span className="text-white/40">Duration:</span> <span className="text-white/80 ml-2">{generatedVideo.duration}s</span></div>
+            <div><span className="text-white/40">Resolution:</span> <span className="text-white/80 ml-2">{generatedVideo.resolution}</span></div>
           </div>
         </div>
       )}

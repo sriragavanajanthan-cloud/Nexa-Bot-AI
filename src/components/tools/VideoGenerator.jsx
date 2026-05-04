@@ -86,9 +86,24 @@ export default function VideoGenerator() {
   
   const abortControllerRef = useRef(null);
 
-  // Calculate total duration in seconds
+  // Calculate total duration in seconds (max 30 seconds for Render memory safety)
   const getTotalDuration = () => {
-    return (durationMinutes * 60) + durationSeconds;
+    let total = (durationMinutes * 60) + durationSeconds;
+    // Enforce 30 second max for Render's 512MB RAM limit
+    if (total > 30) {
+      return 30;
+    }
+    return total;
+  };
+
+  const getDisplayDuration = () => {
+    const total = getTotalDuration();
+    const mins = Math.floor(total / 60);
+    const secs = total % 60;
+    if (mins > 0) {
+      return `${mins}m ${secs}s (max 30s)`;
+    }
+    return `${secs}s (max 30s)`;
   };
 
   // Fetch video options
@@ -143,10 +158,14 @@ export default function VideoGenerator() {
 
   // Assemble selected video
   const assembleSelectedVideo = async (videoUrl) => {
-    const totalDuration = getTotalDuration();
+    let totalDuration = getTotalDuration();
     if (totalDuration < 2) {
       setError("Duration must be at least 2 seconds");
       return;
+    }
+    if (totalDuration > 30) {
+      setError("Duration limited to 30 seconds for optimal performance");
+      totalDuration = 30;
     }
 
     setGenerating(true);
@@ -231,6 +250,8 @@ export default function VideoGenerator() {
     setError("");
     setTextOverlay("");
     setShowTextOverlay(false);
+    setDurationMinutes(0);
+    setDurationSeconds(5);
   };
 
   const getGenerationTime = () => {
@@ -251,6 +272,22 @@ export default function VideoGenerator() {
     return `${secs}s`;
   };
 
+  // Handle duration changes with limits
+  const handleMinutesChange = (val) => {
+    let newMinutes = parseInt(val) || 0;
+    if (newMinutes > 0) {
+      newMinutes = 0; // Force to 0, only seconds allowed
+    }
+    setDurationMinutes(newMinutes);
+  };
+
+  const handleSecondsChange = (val) => {
+    let newSeconds = parseInt(val) || 0;
+    if (newSeconds < 2) newSeconds = 2;
+    if (newSeconds > 30) newSeconds = 30;
+    setDurationSeconds(newSeconds);
+  };
+
   return (
     <div className="p-6 space-y-6 max-w-4xl mx-auto">
       {/* Header */}
@@ -260,7 +297,7 @@ export default function VideoGenerator() {
         </div>
         <div>
           <h2 className="text-xl font-bold text-white">AI Video Studio</h2>
-          <p className="text-white/40 text-sm">Create videos with AI</p>
+          <p className="text-white/40 text-sm">Create videos with AI (max 30s for performance)</p>
         </div>
       </div>
 
@@ -394,35 +431,36 @@ export default function VideoGenerator() {
         </div>
 
         <div className="space-y-2">
-          <label className="text-white/70 text-sm font-medium">⏱️ Duration</label>
+          <label className="text-white/70 text-sm font-medium">⏱️ Duration (2-30 sec)</label>
           <div className="flex gap-2">
             <div className="flex-1">
               <Input
                 type="number"
                 min="0"
-                max="5"
+                max="0"
                 value={durationMinutes}
-                onChange={(e) => setDurationMinutes(Math.min(5, parseInt(e.target.value) || 0))}
+                onChange={(e) => handleMinutesChange(e.target.value)}
                 className="bg-[#1a1a1a] border-white/10 text-white text-center"
                 placeholder="Min"
+                disabled
               />
-              <div className="text-white/40 text-xs text-center mt-1">Minutes</div>
+              <div className="text-white/40 text-xs text-center mt-1">Minutes (disabled)</div>
             </div>
             <div className="flex-1">
               <Input
                 type="number"
-                min="0"
-                max="59"
+                min="2"
+                max="30"
                 value={durationSeconds}
-                onChange={(e) => setDurationSeconds(Math.min(59, parseInt(e.target.value) || 0))}
+                onChange={(e) => handleSecondsChange(e.target.value)}
                 className="bg-[#1a1a1a] border-white/10 text-white text-center"
                 placeholder="Sec"
               />
-              <div className="text-white/40 text-xs text-center mt-1">Seconds</div>
+              <div className="text-white/40 text-xs text-center mt-1">Seconds (2-30)</div>
             </div>
           </div>
           <div className="text-center text-purple-400 text-xs">
-            Total: {formatDurationDisplay()}
+            Total: {formatDurationDisplay()} (max 30s)
           </div>
         </div>
       </div>
@@ -586,9 +624,7 @@ export default function VideoGenerator() {
             </div>
             <div>
               <span className="text-white/40">Duration:</span>
-              <span className="text-white/80 ml-2">
-                {Math.floor(generatedVideo.duration / 60)}m {generatedVideo.duration % 60}s
-              </span>
+              <span className="text-white/80 ml-2">{generatedVideo.duration}s</span>
             </div>
             <div>
               <span className="text-white/40">Resolution:</span>

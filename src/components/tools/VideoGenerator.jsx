@@ -70,7 +70,8 @@ export default function VideoGenerator() {
   const [selectedQuality, setSelectedQuality] = useState(QUALITY_PRESETS[1]);
   const [selectedStyle, setSelectedStyle] = useState(VIDEO_STYLES[0]);
   const [aspectRatio, setAspectRatio] = useState(ASPECT_RATIOS[0]);
-  const [duration, setDuration] = useState(5);
+  const [durationMinutes, setDurationMinutes] = useState(0);
+  const [durationSeconds, setDurationSeconds] = useState(5);
   const [generating, setGenerating] = useState(false);
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [generatedVideo, setGeneratedVideo] = useState(null);
@@ -84,6 +85,11 @@ export default function VideoGenerator() {
   const [showTextOverlay, setShowTextOverlay] = useState(false);
   
   const abortControllerRef = useRef(null);
+
+  // Calculate total duration in seconds
+  const getTotalDuration = () => {
+    return (durationMinutes * 60) + durationSeconds;
+  };
 
   // Fetch video options
   const fetchVideoOptions = async () => {
@@ -137,6 +143,12 @@ export default function VideoGenerator() {
 
   // Assemble selected video
   const assembleSelectedVideo = async (videoUrl) => {
+    const totalDuration = getTotalDuration();
+    if (totalDuration < 2) {
+      setError("Duration must be at least 2 seconds");
+      return;
+    }
+
     setGenerating(true);
     setProgress(0);
     setError("");
@@ -163,7 +175,7 @@ export default function VideoGenerator() {
         body: JSON.stringify({ 
           topic: fullPrompt,
           video_url: videoUrl,
-          duration: duration,
+          duration: totalDuration,
           quality: selectedQuality.id,
           aspectRatio: aspectRatio.id,
           style: selectedStyle.id,
@@ -179,7 +191,7 @@ export default function VideoGenerator() {
         setProgress(100);
         setGeneratedVideo({
           url: data.video_url,
-          duration: duration,
+          duration: totalDuration,
           resolution: selectedQuality.resolution,
           style: selectedStyle.label
         });
@@ -222,10 +234,21 @@ export default function VideoGenerator() {
   };
 
   const getGenerationTime = () => {
-    const baseTime = duration * 2;
+    const totalDuration = getTotalDuration();
+    const baseTime = totalDuration * 2;
     const qualityFactor = selectedQuality.id === "draft" ? 0.5 : 
                          selectedQuality.id === "cinematic" ? 2 : 1;
     return Math.round(baseTime * qualityFactor);
+  };
+
+  const formatDurationDisplay = () => {
+    const total = getTotalDuration();
+    const mins = Math.floor(total / 60);
+    const secs = total % 60;
+    if (mins > 0) {
+      return `${mins}m ${secs}s`;
+    }
+    return `${secs}s`;
   };
 
   return (
@@ -371,15 +394,36 @@ export default function VideoGenerator() {
         </div>
 
         <div className="space-y-2">
-          <label className="text-white/70 text-sm font-medium">⏱️ Duration (seconds)</label>
-          <Input
-            type="number"
-            min="2"
-            max="10"
-            value={duration}
-            onChange={(e) => setDuration(parseInt(e.target.value) || 5)}
-            className="bg-[#1a1a1a] border-white/10 text-white"
-          />
+          <label className="text-white/70 text-sm font-medium">⏱️ Duration</label>
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <Input
+                type="number"
+                min="0"
+                max="5"
+                value={durationMinutes}
+                onChange={(e) => setDurationMinutes(Math.min(5, parseInt(e.target.value) || 0))}
+                className="bg-[#1a1a1a] border-white/10 text-white text-center"
+                placeholder="Min"
+              />
+              <div className="text-white/40 text-xs text-center mt-1">Minutes</div>
+            </div>
+            <div className="flex-1">
+              <Input
+                type="number"
+                min="0"
+                max="59"
+                value={durationSeconds}
+                onChange={(e) => setDurationSeconds(Math.min(59, parseInt(e.target.value) || 0))}
+                className="bg-[#1a1a1a] border-white/10 text-white text-center"
+                placeholder="Sec"
+              />
+              <div className="text-white/40 text-xs text-center mt-1">Seconds</div>
+            </div>
+          </div>
+          <div className="text-center text-purple-400 text-xs">
+            Total: {formatDurationDisplay()}
+          </div>
         </div>
       </div>
 
@@ -542,7 +586,9 @@ export default function VideoGenerator() {
             </div>
             <div>
               <span className="text-white/40">Duration:</span>
-              <span className="text-white/80 ml-2">{generatedVideo.duration}s</span>
+              <span className="text-white/80 ml-2">
+                {Math.floor(generatedVideo.duration / 60)}m {generatedVideo.duration % 60}s
+              </span>
             </div>
             <div>
               <span className="text-white/40">Resolution:</span>

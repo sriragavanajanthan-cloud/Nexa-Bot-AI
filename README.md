@@ -1,9 +1,6 @@
-<<<<<<< HEAD
-**Welcome to your Base44 project** 
 # 🤖 NEXAbot.AI – All‑in‑One AI Platform
 
-**Your personal AI workspace – chat, create, detect, edit, and generate videos, images, and data visualizations.**  
-NEXAbot.AI combines a DIY AI engine, a powerful memory system, content detection, image tools, graphing, and a full‑featured video studio – all in one place.
+**Your personal AI workspace – chat, create, detect, edit, and generate videos, images, and data visualizations.**
 
 [![Live App](https://img.shields.io/badge/Live%20App-Vercel-000)](https://nexa-bot-ai.vercel.app)
 [![Backend API](https://img.shields.io/badge/Backend%20API-Render-46E3B7)](https://nexabot-video-api.onrender.com/health)
@@ -62,44 +59,3 @@ NEXAbot.AI combines a DIY AI engine, a powerful memory system, content detection
 curl -X POST https://nexabot-video-api.onrender.com/assemble \
   -H "Content-Type: application/json" \
   -d '{"topic":"nature","video_url":"...","duration":5,"music_url":"...","text_overlay":"Hello"}'
-**About**
-
-View and Edit  your app on [Base44.com](http://Base44.com) 
-
-This project contains everything you need to run your app locally.
-
-**Edit the code in your local development environment**
-
-Any change pushed to the repo will also be reflected in the Base44 Builder.
-
-**Prerequisites:** 
-
-1. Clone the repository using the project's Git URL 
-2. Navigate to the project directory
-3. Install dependencies: `npm install`
-4. Create an `.env.local` file and set the right environment variables
-
-```
-VITE_BASE44_APP_ID=your_app_id
-VITE_BASE44_APP_BASE_URL=your_backend_url
-
-e.g.
-VITE_BASE44_APP_ID=cbef744a8545c389ef439ea6
-VITE_BASE44_APP_BASE_URL=https://my-to-do-list-81bfaad7.base44.app
-```
-
-Run the app: `npm run dev`
-
-**Publish your changes**
-
-Open [Base44.com](http://Base44.com) and click on Publish.
-
-**Docs & Support**
-
-Documentation: [https://docs.base44.com/Integrations/Using-GitHub](https://docs.base44.com/Integrations/Using-GitHub)
-
-Support: [https://app.base44.com/support](https://app.base44.com/support)
-=======
-# Nexa-Bot-AI
->>>>>>> 2d83a72c6cd36d8f444ed8d12204454494a57360
-# NEXAbot.AI

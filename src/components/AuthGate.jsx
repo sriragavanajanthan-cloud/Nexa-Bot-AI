@@ -3,30 +3,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
 import { Github, Loader2, Mail, Sparkles } from "lucide-react";
-import { Capacitor } from '@capacitor/core';
 
-// Change this to your logo URL
 const LOGO_URL = "https://qxgkityhhwgwohehetek.supabase.co/storage/v1/object/public/Nexa/926442f73_NEXAbotAI.jpg";
-
-// Get the correct redirect URL based on platform
-const getRedirectUrl = () => {
-  // Check if running inside Capacitor (Android/iOS app)
-  if (Capacitor.isNativePlatform()) {
-    // For Android app, use custom scheme
-    return 'nexabot://auth/callback';
-  } else {
-    // For web (localhost or production) - use the current URL origin
-    return window.location.origin;
-  }
-};
 
 export default function AuthGate({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [codeSent, setCodeSent] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [countdown, setCountdown] = useState(0);
 
   useEffect(() => {
     const getSession = async () => {
@@ -44,7 +33,7 @@ export default function AuthGate({ children }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const sendMagicLink = async (e) => {
+  const sendOTP = async (e) => {
     e.preventDefault();
     if (!email.trim()) {
       setError("Please enter your email address");
@@ -55,37 +44,74 @@ export default function AuthGate({ children }) {
     setError("");
     setMessage("");
 
-    const redirectUrl = getRedirectUrl();
-
     const { error: authError } = await supabase.auth.signInWithOtp({
       email: email.trim(),
       options: {
-        emailRedirectTo: redirectUrl,
-      },
+        shouldCreateUser: true,
+      }
     });
 
     if (authError) {
       setError(authError.message);
     } else {
-      setMessage(`✨ Magic link sent to ${email}! Check your inbox.`);
-      setEmail("");
+      setCodeSent(true);
+      setCountdown(60);
+      setMessage(`✨ Verification code sent to ${email}! Check your inbox.`);
+      const timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
     }
     setSending(false);
   };
 
+  const verifyOTP = async (e) => {
+    e.preventDefault();
+    if (!otp || otp.length !== 6) {
+      setError("Please enter the 6-digit code");
+      return;
+    }
+
+    setSending(true);
+    setError("");
+    setMessage("");
+
+    const { data, error: authError } = await supabase.auth.verifyOtp({
+      email: email.trim(),
+      token: otp,
+      type: 'email',
+    });
+
+    if (authError) {
+      setError(authError.message);
+    } else {
+      setUser(data.user);
+      localStorage.setItem("nexabot_user_email", data.user.email);
+    }
+    setSending(false);
+  };
+
+  const resendCode = () => {
+    if (countdown > 0) return;
+    sendOTP(new Event('submit'));
+  };
+
   const signInWithGoogle = async () => {
-    const redirectUrl = getRedirectUrl();
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: redirectUrl }
+      options: { redirectTo: window.location.origin }
     });
   };
 
   const signInWithGithub = async () => {
-    const redirectUrl = getRedirectUrl();
     await supabase.auth.signInWithOAuth({
       provider: 'github',
-      options: { redirectTo: redirectUrl }
+      options: { redirectTo: window.location.origin }
     });
   };
 
@@ -108,7 +134,6 @@ export default function AuthGate({ children }) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] to-[#1a1a1a] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Logo Section */}
         <div className="flex flex-col items-center mb-8">
           <img
             src={LOGO_URL}
@@ -123,49 +148,106 @@ export default function AuthGate({ children }) {
           </p>
         </div>
 
-        {/* Auth Card */}
         <div className="bg-[#1a1a1a]/80 backdrop-blur-sm border border-white/10 rounded-2xl p-6 space-y-4">
-          <form onSubmit={sendMagicLink} className="space-y-3">
-            <div>
-              <label className="text-white/50 text-sm block mb-1.5">Email Address</label>
-              <Input
-                type="email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setError("");
-                  setMessage("");
-                }}
-                placeholder="you@example.com"
-                required
-                className="bg-[#0d0d0d] border-white/10 text-white placeholder:text-white/20 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50"
-              />
-            </div>
-
-            {error && (
-              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-                <p className="text-red-400 text-sm">{error}</p>
+          {!codeSent ? (
+            <form onSubmit={sendOTP} className="space-y-3">
+              <div>
+                <label className="text-white/50 text-sm block mb-1.5">Email Address</label>
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setError("");
+                    setMessage("");
+                  }}
+                  placeholder="you@example.com"
+                  required
+                  className="bg-[#0d0d0d] border-white/10 text-white placeholder:text-white/20 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50"
+                />
               </div>
-            )}
-            {message && (
-              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
-                <p className="text-green-400 text-sm">{message}</p>
-              </div>
-            )}
 
-            <Button
-              type="submit"
-              disabled={sending}
-              className="w-full bg-gradient-to-r from-cyan-500 to-green-500 hover:opacity-90 text-white font-semibold"
-            >
-              {sending ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Mail className="w-4 h-4 mr-2" />
+              {error && (
+                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                  <p className="text-red-400 text-sm">{error}</p>
+                </div>
               )}
-              Send Magic Link
-            </Button>
-          </form>
+              {message && (
+                <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                  <p className="text-green-400 text-sm">{message}</p>
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                disabled={sending}
+                className="w-full bg-gradient-to-r from-cyan-500 to-green-500 hover:opacity-90 text-white font-semibold"
+              >
+                {sending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Mail className="w-4 h-4 mr-2" />
+                )}
+                Send Verification Code
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={verifyOTP} className="space-y-3">
+              <div>
+                <label className="text-white/50 text-sm block mb-1.5">Verification Code</label>
+                <Input
+                  type="text"
+                  value={otp}
+                  onChange={(e) => {
+                    setOtp(e.target.value.slice(0, 6));
+                    setError("");
+                    setMessage("");
+                  }}
+                  placeholder="Enter 6-digit code"
+                  required
+                  maxLength={6}
+                  className="bg-[#0d0d0d] border-white/10 text-white placeholder:text-white/20 text-center text-2xl tracking-widest focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50"
+                />
+                <p className="text-white/30 text-xs mt-2">
+                  We sent a code to <span className="text-cyan-400">{email}</span>
+                </p>
+              </div>
+
+              {error && (
+                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                  <p className="text-red-400 text-sm">{error}</p>
+                </div>
+              )}
+              {message && (
+                <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                  <p className="text-green-400 text-sm">{message}</p>
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                disabled={sending}
+                className="w-full bg-gradient-to-r from-green-500 to-cyan-500 hover:opacity-90 text-white font-semibold"
+              >
+                {sending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4 mr-2" />
+                )}
+                Verify & Sign In
+              </Button>
+
+              <Button
+                type="button"
+                onClick={resendCode}
+                disabled={countdown > 0}
+                variant="ghost"
+                className="w-full text-white/50 hover:text-white/80"
+              >
+                {countdown > 0 ? `Resend code in ${countdown}s` : 'Resend Code'}
+              </Button>
+            </form>
+          )}
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
@@ -198,7 +280,7 @@ export default function AuthGate({ children }) {
           </Button>
 
           <p className="text-white/30 text-xs text-center">
-            No password needed — check your email for a magic link
+            Enter your email to receive a 6-digit verification code
           </p>
         </div>
       </div>

@@ -1,6 +1,9 @@
 {
+  "redirects": [
+    { "source": "/", "destination": "/landing", "permanent": false }
+  ],
   "rewrites": [
-    { "source": "/", "destination": "/landing.html" },
+    { "source": "/landing", "destination": "/landing.html" },
     { "source": "/app", "destination": "/index.html" },
     { "source": "/download", "destination": "/download.html" }
   ]

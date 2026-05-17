@@ -1,8 +1,8 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/index.html" },
+    { "source": "/", "destination": "/landing.html" },
+    { "source": "/app", "destination": "/index.html" },
     { "source": "/download", "destination": "/download.html" },
-    { "source": "/chat", "destination": "/index.html" },
-    { "source": "/api/download-apk", "destination": "https://github.com/sriragavanajanthan-cloud/Nexa-Bot-AI/releases/latest/download/app-debug.apk" }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

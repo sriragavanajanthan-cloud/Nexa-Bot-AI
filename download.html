@@ -30,9 +30,9 @@
             <h1>Download NEXAbot.AI</h1>
             <p>Get the full Android app experience with better performance and native features.</p>
 
-            <a href="#" class="btn btn-primary" id="downloadLink">
-                ⬇️ Checking for latest version...
-            </a>
+            <button class="btn btn-primary" id="downloadBtn">
+                ⬇️ Preparing download...
+            </button>
 
             <a href="/" class="btn btn-secondary">
                 ← Back to Home
@@ -51,40 +51,53 @@
     </div>
 
     <script>
-        const downloadLink = document.getElementById('downloadLink');
-        
-        // Direct download from GitHub raw (works without redirect)
-        const APK_URL = 'https://github.com/sriragavanajanthan-cloud/Nexa-Bot-AI/releases/download/v1.0.0/app-debug.apk';
-        
-        // Try to get the latest APK from GitHub API
-        async function getLatestAPK() {
-            downloadLink.innerHTML = '<span class="spinner"></span> Fetching latest version...';
+        const downloadBtn = document.getElementById('downloadBtn');
+        let apkUrl = '';
+
+        async function initDownload() {
+            downloadBtn.innerHTML = '<span class="spinner"></span> Fetching latest version...';
+            downloadBtn.disabled = true;
             
             try {
+                // Try to get the latest APK from GitHub API
                 const response = await fetch('https://api.github.com/repos/sriragavanajanthan-cloud/Nexa-Bot-AI/releases/latest');
                 const data = await response.json();
                 const apkAsset = data.assets?.find(a => a.name.includes('.apk'));
                 
                 if (apkAsset) {
-                    downloadLink.href = apkAsset.browser_download_url;
-                    downloadLink.innerHTML = `⬇️ Download ${apkAsset.name}`;
-                    return;
+                    apkUrl = apkAsset.browser_download_url;
+                    downloadBtn.innerHTML = '⬇️ Download NEXAbot.apk';
+                    downloadBtn.disabled = false;
+                } else {
+                    throw new Error('No APK found');
                 }
             } catch(e) {
-                console.log('GitHub API error, using fallback');
+                // Fallback to known URL
+                apkUrl = 'https://github.com/sriragavanajanthan-cloud/Nexa-Bot-AI/releases/download/v1.0.0/app-debu4g.apk';
+                downloadBtn.innerHTML = '⬇️ Download NEXAbot.apk';
+                downloadBtn.disabled = false;
+            }
+        }
+
+        // Trigger download without leaving the page
+        function downloadAPK() {
+            if (!apkUrl) {
+                alert('APK not ready yet. Please wait.');
+                return;
             }
             
-            // Fallback to direct URL
-            downloadLink.href = APK_URL;
-            downloadLink.innerHTML = '⬇️ Download NEXAbot.apk';
+            // Create a temporary anchor element
+            const link = document.createElement('a');
+            link.href = apkUrl;
+            link.download = 'NEXAbot.apk';  // Suggest filename
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
-        
-        getLatestAPK();
-        
-        // Track download for analytics
-        downloadLink.addEventListener('click', () => {
-            console.log('APK download started');
-        });
+
+        downloadBtn.addEventListener('click', downloadAPK);
+        initDownload();
     </script>
 </body>
 </html>

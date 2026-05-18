@@ -23,13 +23,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Install TypeScript and Capacitor CLI
+      - name: Install dependencies (including TypeScript)
         run: |
-          npm install -g typescript
-          npm install -g @capacitor/cli
+          npm install
+          npm install -D typescript @types/node
 
       - name: Build web app
         run: npm run build

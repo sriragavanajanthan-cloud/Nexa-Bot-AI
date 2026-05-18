@@ -3,8 +3,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
 import { Github, Loader2, Mail, Sparkles } from "lucide-react";
+import { Browser } from '@capacitor/browser';
+import { Capacitor } from '@capacitor/core';
 
 const LOGO_URL = "https://qxgkityhhwgwohehetek.supabase.co/storage/v1/object/public/Nexa/926442f73_NEXAbotAI.jpg";
+
+// Get the correct redirect URL based on platform
+const getRedirectUrl = () => {
+  if (Capacitor.isNativePlatform()) {
+    return 'nexabot://auth/callback';
+  }
+  // For web, redirect to the web app path
+  return `${window.location.origin}/app`;
+};
 
 export default function AuthGate({ children }) {
   const [user, setUser] = useState(null);
@@ -29,6 +40,35 @@ export default function AuthGate({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
+
+    // Handle deep link for mobile OAuth callbacks
+    const handleDeepLink = async (url) => {
+      if (url && url.includes('access_token')) {
+        const fragment = url.split('#')[1];
+        const params = new URLSearchParams(fragment);
+        
+        const { data, error } = await supabase.auth.setSession({
+          access_token: params.get('access_token'),
+          refresh_token: params.get('refresh_token')
+        });
+        
+        if (!error && data.user) {
+          setUser(data.user);
+          // Redirect to web app path
+          window.location.href = '/app';
+        }
+      }
+    };
+
+    handleDeepLink(window.location.href);
+    
+    if (Capacitor.isNativePlatform()) {
+      import('@capacitor/app').then(({ App }) => {
+        App.addListener('appUrlOpen', (event) => {
+          handleDeepLink(event.url);
+        });
+      });
+    }
 
     return () => subscription.unsubscribe();
   }, []);
@@ -56,7 +96,7 @@ export default function AuthGate({ children }) {
     } else {
       setCodeSent(true);
       setCountdown(60);
-      setMessage(`✨ Verification code sent to ${email}! Check your inbox.`);
+      setMessage(`✨ Verification code sent to ${email}!`);
       const timer = setInterval(() => {
         setCountdown((prev) => {
           if (prev <= 1) {
@@ -92,6 +132,8 @@ export default function AuthGate({ children }) {
     } else {
       setUser(data.user);
       localStorage.setItem("nexabot_user_email", data.user.email);
+      // Explicitly redirect to web app path
+      window.location.href = '/app';
     }
     setSending(false);
   };
@@ -101,18 +143,19 @@ export default function AuthGate({ children }) {
     sendOTP(new Event('submit'));
   };
 
-  const signInWithGoogle = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin }
+  const signInWithProvider = async (provider) => {
+    const redirectUrl = getRedirectUrl();
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: provider,
+      options: { redirectTo: redirectUrl }
     });
-  };
-
-  const signInWithGithub = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'github',
-      options: { redirectTo: window.location.origin }
-    });
+    
+    if (error) {
+      setError(error.message);
+    } else if (data?.url && Capacitor.isNativePlatform()) {
+      await Browser.open({ url: data.url });
+    }
+    // For web, the OAuth will redirect automatically – no extra action needed
   };
 
   if (loading) {
@@ -259,7 +302,7 @@ export default function AuthGate({ children }) {
           </div>
 
           <Button
-            onClick={signInWithGoogle}
+            onClick={() => signInWithProvider('google')}
             className="w-full bg-white hover:bg-gray-100 text-black font-semibold flex items-center justify-center gap-2"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -272,7 +315,7 @@ export default function AuthGate({ children }) {
           </Button>
 
           <Button
-            onClick={signInWithGithub}
+            onClick={() => signInWithProvider('github')}
             className="w-full bg-[#24292e] hover:bg-[#1b1f23] text-white font-semibold"
           >
             <Github className="w-4 h-4 mr-2" />

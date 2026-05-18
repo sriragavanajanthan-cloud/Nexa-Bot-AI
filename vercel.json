@@ -1,9 +1,8 @@
 {
-  "routes": [
-    { "src": "/", "dest": "/landing.html" },
-    { "src": "/app", "dest": "/index.html" },
-    { "src": "/app/(.*)", "dest": "/index.html" },
-    { "src": "/download", "dest": "/download.html" }
-  ],
-  "cleanUrls": false
+  "rewrites": [
+    { "source": "/", "destination": "/landing.html" },
+    { "source": "/app", "destination": "/index.html" },
+    { "source": "/app/(.*)", "destination": "/index.html" },
+    { "source": "/download", "destination": "/download.html" }
+  ]
 }

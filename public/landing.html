@@ -32,11 +32,19 @@
         .stat-number { font-size: 36px; font-weight: bold; background: linear-gradient(135deg, #00ffb3, #00cfff); -webkit-background-clip: text; background-clip: text; color: transparent; }
         .stat-label { color: #9ca3af; margin-top: 8px; }
         .footer { text-align: center; padding: 40px 20px; color: #6b7280; font-size: 14px; border-top: 1px solid rgba(255, 255, 255, 0.1); }
+        .app-banner { background: #3ddc84; color: #0a0a0a; padding: 16px; text-align: center; border-radius: 16px; margin-bottom: 24px; font-weight: bold; }
+        .app-banner a { color: #0a0a0a; text-decoration: underline; }
         @media (max-width: 768px) { h1 { font-size: 32px; } .choice-section { padding: 32px 24px; } .choice-buttons { flex-direction: column; align-items: center; } .btn { width: 100%; justify-content: center; } .features { grid-template-columns: 1fr; } }
     </style>
+<link rel="icon" type="image/png" sizes="512x512" href="/favicon.png" />
 </head>
 <body>
     <div class="container">
+        <!-- Show banner if user is on mobile but not in the app -->
+        <div id="appBanner" class="app-banner" style="display: none;">
+            📱 You're on mobile! <a href="#" id="openAppBtn">Open in NEXAbot App</a>
+        </div>
+
         <div class="header">
             <div class="logo">🤖</div>
             <h1>NEXAbot.AI</h1>
@@ -55,7 +63,7 @@
             <p class="choice-subtitle">Get the full NEXAbot.AI experience on any device</p>
             <div class="choice-buttons">
                 <a href="/download" class="btn btn-android">📱 Download Android App</a>
-                <a href="/app" class="btn btn-web">�� Continue to Web Chat</a>
+                <a href="/app" class="btn btn-web">🌐 Continue to Web Chat</a>
             </div>
         </div>
 
@@ -67,11 +75,42 @@
 
         <div class="footer"><p>© 2026 NEXAbot.AI • Secure • Private • Always Free</p></div>
     </div>
+
     <script>
+        // Check if running inside the Android app
+        const isInApp = navigator.userAgent.includes('nexabot') || 
+                        navigator.userAgent.includes('NEXAbot') ||
+                        document.referrer.includes('nexabot://');
+        
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        
+        if (isInApp) {
+            // User is in the app - redirect to app content
+            window.location.href = '/app';
+        } else if (isMobile) {
+            // User is on mobile browser - show banner to open in app
+            const banner = document.getElementById('appBanner');
+            banner.style.display = 'block';
+            
+            document.getElementById('openAppBtn').addEventListener('click', (e) => {
+                e.preventDefault();
+                // Try to open the app with custom scheme
+                window.location.href = 'nexabot://app';
+                
+                // Fallback: after 2 seconds, if still here, offer download
+                setTimeout(() => {
+                    if (document.hasFocus()) {
+                        alert('NEXAbot app not installed. Would you like to download it?');
+                        window.location.href = '/download';
+                    }
+                }, 2000);
+            });
+        }
+        
         const isAndroid = /Android/i.test(navigator.userAgent);
-        if (isAndroid) {
-            const btn = document.querySelector('.btn-android');
-            if (btn) btn.innerHTML = '📱 Download APK (Recommended for Android)';
+        if (isAndroid && !isInApp) {
+            const downloadBtn = document.querySelector('.btn-android');
+            if (downloadBtn) downloadBtn.innerHTML = '📱 Download APK (Recommended)';
         }
     </script>
 </body>

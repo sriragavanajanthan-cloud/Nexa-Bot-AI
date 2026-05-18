@@ -23,16 +23,17 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install dependencies (including TypeScript)
+      - name: Install dependencies
         run: |
           npm install
           npm install -D typescript @types/node
+          npm install -g @capacitor/cli
 
       - name: Build web app
         run: npm run build
 
       - name: Sync Capacitor
-        run: npx cap sync android
+        run: capacitor sync android
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3

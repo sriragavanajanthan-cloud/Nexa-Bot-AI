@@ -27,22 +27,16 @@ jobs:
         run: |
           npm install
           npm install -D typescript @types/node
+          npm install @capacitor/cli @capacitor/core @capacitor/android @capacitor/app @capacitor/browser
 
       - name: Build web app
         run: npm run build
 
       - name: Sync Capacitor
-        run: npx cap sync android
+        run: ./node_modules/.bin/cap sync android
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-
-      - name: Update Gradle Java version
-        run: |
-          cd android
-          echo "android.compileSdk = 33" > gradle.properties
-          echo "android.targetSdk = 33" >> gradle.properties
-          echo "android.minSdk = 23" >> gradle.properties
 
       - name: Build APK
         run: |

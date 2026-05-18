@@ -8,13 +8,11 @@ import { Capacitor } from '@capacitor/core';
 
 const LOGO_URL = "https://qxgkityhhwgwohehetek.supabase.co/storage/v1/object/public/Nexa/926442f73_NEXAbotAI.jpg";
 
-// Get the correct redirect URL based on platform
 const getRedirectUrl = () => {
   if (Capacitor.isNativePlatform()) {
     return 'nexabot://auth/callback';
   }
-  // For web, redirect to the web app path
-  return `${window.location.origin}/app`;
+  return `${window.location.origin}/app/`;
 };
 
 export default function AuthGate({ children }) {
@@ -41,7 +39,6 @@ export default function AuthGate({ children }) {
       setUser(session?.user ?? null);
     });
 
-    // Handle deep link for mobile OAuth callbacks
     const handleDeepLink = async (url) => {
       if (url && url.includes('access_token')) {
         const fragment = url.split('#')[1];
@@ -54,8 +51,7 @@ export default function AuthGate({ children }) {
         
         if (!error && data.user) {
           setUser(data.user);
-          // Redirect to web app path
-          window.location.href = '/app';
+          window.location.href = '/app/';
         }
       }
     };
@@ -132,8 +128,7 @@ export default function AuthGate({ children }) {
     } else {
       setUser(data.user);
       localStorage.setItem("nexabot_user_email", data.user.email);
-      // Explicitly redirect to web app path
-      window.location.href = '/app';
+      window.location.href = '/app/';
     }
     setSending(false);
   };
@@ -155,7 +150,6 @@ export default function AuthGate({ children }) {
     } else if (data?.url && Capacitor.isNativePlatform()) {
       await Browser.open({ url: data.url });
     }
-    // For web, the OAuth will redirect automatically – no extra action needed
   };
 
   if (loading) {

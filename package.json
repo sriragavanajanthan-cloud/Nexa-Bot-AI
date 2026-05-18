@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && cp landing.html dist/index.html && cp dist/index.html dist/app.html && cp download.html dist/",
+    "build": "vite build && cp landing.html dist/index.html && cp download.html dist/ && cp -r dist/assets dist/app/ && cp dist/index.html dist/app.html",
     "lint": "eslint .",
     "preview": "vite preview"
   },

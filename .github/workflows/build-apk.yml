@@ -26,8 +26,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Install Capacitor CLI
-        run: npm install -g @capacitor/cli
+      - name: Install TypeScript and Capacitor CLI
+        run: |
+          npm install -g typescript
+          npm install -g @capacitor/cli
 
       - name: Build web app
         run: npm run build

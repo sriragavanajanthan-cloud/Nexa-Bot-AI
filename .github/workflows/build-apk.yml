@@ -23,8 +23,11 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install Capacitor dependencies
-        run: npm install @capacitor/core @capacitor/android @capacitor/app @capacitor/browser
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Capacitor CLI
+        run: npm install -g @capacitor/cli
 
       - name: Build web app
         run: npm run build

@@ -1,10 +1,8 @@
 {
-  "cleanUrls": true,
-  "trailingSlash": false,
   "routes": [
-    { "src": "^/$", "dest": "/index.html" },
-    { "src": "^/app$", "dest": "/react.html" },
-    { "src": "^/app/(.*)$", "dest": "/react.html" },
-    { "src": "^/download$", "dest": "/download.html" }
+    { "src": "/", "dest": "/index.html" },
+    { "src": "/app", "dest": "/index.html" },
+    { "src": "/app/(.*)", "dest": "/index.html" },
+    { "src": "/download", "dest": "/download.html" }
   ]
 }

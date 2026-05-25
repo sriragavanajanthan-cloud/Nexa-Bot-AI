@@ -30,36 +30,6 @@ export default function AuthGate({ children }) {
       setUser(session?.user ?? null);
     });
 
-    // Handle deep link for mobile OAuth callbacks (only if Capacitor is available)
-    const handleDeepLink = async (url) => {
-      if (url && url.includes('access_token')) {
-        const fragment = url.split('#')[1];
-        const params = new URLSearchParams(fragment);
-        
-        const { data, error } = await supabase.auth.setSession({
-          access_token: params.get('access_token'),
-          refresh_token: params.get('refresh_token')
-        });
-        
-        if (!error && data.user) {
-          setUser(data.user);
-          window.location.href = '/app/';
-        }
-      }
-    };
-
-    handleDeepLink(window.location.href);
-    
-    // Only import Capacitor on mobile devices
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    if (isMobile) {
-      import('@capacitor/app').then(({ App }) => {
-        App.addListener('appUrlOpen', (event) => {
-          handleDeepLink(event.url);
-        });
-      }).catch(err => console.log('Capacitor not available:', err));
-    }
-
     return () => subscription.unsubscribe();
   }, []);
 

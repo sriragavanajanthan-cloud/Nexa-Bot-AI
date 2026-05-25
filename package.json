@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && mkdir -p dist/app && cp -r dist/*.js dist/*.css dist/*.html dist/assets dist/app/ 2>/dev/null || true && cp landing.html dist/index.html && cp download.html dist/",
+    "build": "vite build && cp -r dist dist-temp && cp landing.html dist/index.html && cp download.html dist/ && mkdir -p dist/app && cp -r dist-temp/* dist/app/ && rm -rf dist-temp",
     "lint": "eslint .",
     "preview": "vite preview"
   },

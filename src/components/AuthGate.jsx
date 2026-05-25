@@ -3,17 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
 import { Github, Loader2, Mail, Sparkles } from "lucide-react";
-import { Browser } from '@capacitor/browser';
-import { Capacitor } from '@capacitor/core';
 
 const LOGO_URL = "https://qxgkityhhwgwohehetek.supabase.co/storage/v1/object/public/Nexa/926442f73_NEXAbotAI.jpg";
-
-const getRedirectUrl = () => {
-  if (Capacitor.isNativePlatform()) {
-    return 'nexabot://auth/callback';
-  }
-  return `${window.location.origin}/app/`;
-};
 
 export default function AuthGate({ children }) {
   const [user, setUser] = useState(null);
@@ -39,6 +30,7 @@ export default function AuthGate({ children }) {
       setUser(session?.user ?? null);
     });
 
+    // Handle deep link for mobile OAuth callbacks (only if Capacitor is available)
     const handleDeepLink = async (url) => {
       if (url && url.includes('access_token')) {
         const fragment = url.split('#')[1];
@@ -58,12 +50,14 @@ export default function AuthGate({ children }) {
 
     handleDeepLink(window.location.href);
     
-    if (Capacitor.isNativePlatform()) {
+    // Only import Capacitor on mobile devices
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile) {
       import('@capacitor/app').then(({ App }) => {
         App.addListener('appUrlOpen', (event) => {
           handleDeepLink(event.url);
         });
-      });
+      }).catch(err => console.log('Capacitor not available:', err));
     }
 
     return () => subscription.unsubscribe();
@@ -128,7 +122,6 @@ export default function AuthGate({ children }) {
     } else {
       setUser(data.user);
       localStorage.setItem("nexabot_user_email", data.user.email);
-      window.location.href = '/app/';
     }
     setSending(false);
   };
@@ -139,17 +132,11 @@ export default function AuthGate({ children }) {
   };
 
   const signInWithProvider = async (provider) => {
-    const redirectUrl = getRedirectUrl();
-    const { data, error } = await supabase.auth.signInWithOAuth({
+    const redirectUrl = window.location.origin + '/app/';
+    await supabase.auth.signInWithOAuth({
       provider: provider,
       options: { redirectTo: redirectUrl }
     });
-    
-    if (error) {
-      setError(error.message);
-    } else if (data?.url && Capacitor.isNativePlatform()) {
-      await Browser.open({ url: data.url });
-    }
   };
 
   if (loading) {
@@ -164,7 +151,6 @@ export default function AuthGate({ children }) {
   }
 
   if (user) {
-    localStorage.setItem("nexabot_user_email", user.email);
     return <>{children}</>;
   }
 

@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   MessageCircle, Video, Image, Brain, Shield, 
-  Pencil, BarChart3, Search, Zap, Menu, X,
-  Sparkles, Code, BookOpen, LogOut, Settings
+  Pencil, BarChart3, Search, Sparkles, LogOut, X
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -45,15 +44,8 @@ export default function MobileSidebar({ isOpen, onClose }) {
 
   return (
     <>
-      {/* Overlay */}
-      <div 
-        className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-        onClick={onClose}
-      />
-      
-      {/* Drawer */}
-      <div className="fixed top-0 left-0 bottom-0 w-72 bg-[#1a1a1a] z-50 shadow-xl flex flex-col animate-slide-in lg:relative lg:translate-x-0">
-        {/* Header */}
+      <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={onClose} />
+      <div className="fixed top-0 left-0 bottom-0 w-72 bg-[#1a1a1a] z-50 shadow-xl flex flex-col">
         <div className="p-4 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-cyan-500 to-green-500 flex items-center justify-center">
@@ -66,13 +58,11 @@ export default function MobileSidebar({ isOpen, onClose }) {
           </button>
         </div>
 
-        {/* User info */}
         <div className="p-4 border-b border-white/10">
           <p className="text-sm text-white/70">Signed in as</p>
           <p className="text-sm font-medium text-white truncate">{userEmail}</p>
         </div>
 
-        {/* Menu items */}
         <div className="flex-1 overflow-y-auto py-2">
           {MENU_ITEMS.map((item) => (
             <button
@@ -90,7 +80,6 @@ export default function MobileSidebar({ isOpen, onClose }) {
           ))}
         </div>
 
-        {/* Footer */}
         <div className="p-4 border-t border-white/10">
           <button
             onClick={handleSignOut}
@@ -101,16 +90,6 @@ export default function MobileSidebar({ isOpen, onClose }) {
           </button>
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes slide-in {
-          from { transform: translateX(-100%); }
-          to { transform: translateX(0); }
-        }
-        .animate-slide-in {
-          animation: slide-in 0.3s ease-out;
-        }
-      `}</style>
     </>
   );
 }

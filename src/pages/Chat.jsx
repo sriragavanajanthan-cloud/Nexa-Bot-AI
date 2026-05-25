@@ -140,7 +140,7 @@ export default function Chat() {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     localStorage.removeItem("nexabot_user_email");
-    window.location.reload();
+    window.location.href = "/app";
   };
 
   return (

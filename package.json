@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && cp -r dist/* dist/app/ && cp landing.html dist/index.html && cp download.html dist/",
+    "build": "vite build && mkdir -p dist/app && cp -r dist/* dist/app/ && cp landing.html dist/index.html && cp download.html dist/",
     "lint": "eslint .",
     "preview": "vite preview"
-  },
+  },git add package.json
+  git commit -m "Fix build: create dist/app directory before copying"
+  git push origin main
   "dependencies": {
     "@capacitor/android": "^5.7.0",
     "@capacitor/app": "^5.0.6",

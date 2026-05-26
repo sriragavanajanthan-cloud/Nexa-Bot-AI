@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && mkdir -p dist/webapp && mv dist/index.html dist/webapp/ && mv dist/assets dist/webapp/ && cp landing.html dist/index.html && cp download.html dist/",
+    "build": "vite build && cp landing.html dist/index.html && cp download.html dist/ && mkdir -p dist/app && cp dist/index.html dist/app/ 2>/dev/null || true && cp -r dist/assets dist/app/ 2>/dev/null || true && cp favicon.png favicon-32.png dist/app/ 2>/dev/null || true && sed -i '' 's|href=\"./favicon|href=\"/app/favicon|g' dist/app/index.html && sed -i '' 's|src=\"./assets/|src=\"/app/assets/|g' dist/app/index.html && rm -f dist/index.html",
     "preview": "vite preview"
   },
   "dependencies": {

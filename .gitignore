@@ -48,3 +48,5 @@ ffmpeg.zip
 temp_*
 technology_video.mp4
 venv/
+.vercel
+.env*.local

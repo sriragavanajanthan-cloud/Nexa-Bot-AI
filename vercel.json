@@ -2,7 +2,6 @@
   "routes": [
     { "src": "/", "dest": "/index.html" },
     { "src": "/app", "dest": "/app/index.html" },
-    { "src": "/app/(.*)", "dest": "/app/index.html" },
-    { "src": "/download", "dest": "/download.html" }
+    { "src": "/app/(.*)", "dest": "/app/index.html" }
   ]
 }

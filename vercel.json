@@ -3,6 +3,7 @@
     { "src": "/", "dest": "/index.html" },
     { "src": "/app", "dest": "/app/index.html" },
     { "src": "/app/(.*)", "dest": "/app/index.html" },
+    { "src": "/app/assets/(.*)", "dest": "/app/assets/$1" },
     { "src": "/download", "dest": "/download.html" }
   ]
 }

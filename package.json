@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && cp -r dist/assets dist/app/ && cp landing.html dist/index.html && cp download.html dist/ && cp dist/index.html dist/app/index.html",
+    "build": "vite build && cp -r dist dist-react && cp landing.html dist/index.html && cp download.html dist/ && rm -rf dist/app && mkdir -p dist/app && cp -r dist-react/* dist/app/ && rm -rf dist-react",
     "preview": "vite preview"
   },
   "dependencies": {

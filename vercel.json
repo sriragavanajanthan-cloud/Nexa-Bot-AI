@@ -1,9 +1,9 @@
 {
   "routes": [
     { "src": "/", "dest": "/index.html" },
-    { "src": "/app", "dest": "/app/index.html" },
-    { "src": "/app/(.*)", "dest": "/app/index.html" },
-    { "src": "/app/assets/(.*)", "dest": "/app/assets/$1" },
+    { "src": "/app", "dest": "/webapp/index.html" },
+    { "src": "/app/(.*)", "dest": "/webapp/index.html" },
+    { "src": "/webapp/(.*)", "dest": "/webapp/$1" },
     { "src": "/download", "dest": "/download.html" }
   ]
 }

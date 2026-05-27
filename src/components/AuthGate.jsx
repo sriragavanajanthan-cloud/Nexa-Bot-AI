@@ -92,7 +92,7 @@ export default function AuthGate({ children }) {
     } else {
       setUser(data.user);
       localStorage.setItem("nexabot_user_email", data.user.email);
-      // Stay within the app - no redirect needed
+      // Stay within the app - no redirect needed for OTP
     }
     setSending(false);
   };
@@ -103,12 +103,27 @@ export default function AuthGate({ children }) {
   };
 
   const signInWithProvider = async (provider) => {
-    // Use /app as the redirect URL
-    const redirectUrl = window.location.origin + '/app';
-    await supabase.auth.signInWithOAuth({
+    // Get the current deployment URL (no hardcoded domains)
+    const currentUrl = window.location.origin;
+    const redirectUrl = currentUrl + '/app';
+    
+    console.log('Redirect URL:', redirectUrl);
+    
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: provider,
-      options: { redirectTo: redirectUrl }
+      options: { 
+        redirectTo: redirectUrl,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent'
+        }
+      }
     });
+    
+    if (error) {
+      console.error('OAuth error:', error);
+      setError(error.message);
+    }
   };
 
   if (loading) {

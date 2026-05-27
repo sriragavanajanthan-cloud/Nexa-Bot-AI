@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && cp landing.html dist/index.html && cp download.html dist/ && mkdir -p dist/app && cp dist/index.html dist/app/ && cp -r dist/assets dist/app/ && cp favicon.png favicon-32.png dist/app/ && node -e \"const fs=require('fs'); const p='dist/app/index.html'; let c=fs.readFileSync(p,'utf8'); c=c.replace(/href=\"\\.\\/favicon/g,'href=\"/app/favicon'); c=c.replace(/src=\"\\.\\/assets\\//g,'src=\"/app/assets/'); fs.writeFileSync(p,c);\" && rm -f dist/index.html",
+    "build": "vite build && mkdir -p dist/app && cp dist/index.html dist/app/ && cp -r dist/assets dist/app/ && cp favicon.png favicon-32.png dist/app/ && node fix-paths.cjs && cp landing.html dist/index.html && cp download.html dist/",
     "preview": "vite preview"
   },
   "dependencies": {

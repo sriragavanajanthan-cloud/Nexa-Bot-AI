@@ -26,6 +26,27 @@ export default function AuthGate({ children }) {
 
     getSession();
 
+    // Handle OAuth redirect on page load (for GitHub/Google callback)
+    const handleAuthCallback = async () => {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token');
+      
+      if (accessToken && refreshToken) {
+        const { data, error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken
+        });
+        if (!error && data.user) {
+          setUser(data.user);
+          // Clear the URL hash to clean up
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      }
+    };
+    
+    handleAuthCallback();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
@@ -92,7 +113,6 @@ export default function AuthGate({ children }) {
     } else {
       setUser(data.user);
       localStorage.setItem("nexabot_user_email", data.user.email);
-      // Stay within the app - no redirect needed for OTP
     }
     setSending(false);
   };
@@ -103,20 +123,13 @@ export default function AuthGate({ children }) {
   };
 
   const signInWithProvider = async (provider) => {
-    // Get the current deployment URL (no hardcoded domains)
     const currentUrl = window.location.origin;
     const redirectUrl = currentUrl + '/app';
-    
-    console.log('Redirect URL:', redirectUrl);
     
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: provider,
       options: { 
         redirectTo: redirectUrl,
-        queryParams: {
-          access_type: 'offline',
-          prompt: 'consent'
-        }
       }
     });
     

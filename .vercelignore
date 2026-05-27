@@ -1,5 +1,1 @@
-**/*.py
-**/venv/
-**/requirements.txt
-**/render.yaml
-**/backend/
+.vercel

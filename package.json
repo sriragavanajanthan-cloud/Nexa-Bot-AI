@@ -5,13 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && mkdir -p dist/app && cp dist/index.html dist/app/ && cp -r dist/assets dist/app/ && cp favicon.png favicon-32.png dist/app/ && node fix-paths.cjs && cp landing.html dist/index.html && cp download.html dist/",
+    "build": "vite build --force && mkdir -p dist/app && cp dist/index.html dist/app/ && cp -r dist/assets dist/app/ && cp favicon.png favicon-32.png dist/app/ && node fix-paths.cjs && cp landing.html dist/index.html && cp download.html dist/",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@capacitor/app": "^8.1.0",
-    "@capacitor/browser": "^8.0.3",
-    "@capacitor/core": "^8.3.4",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-avatar": "^1.1.0",
@@ -63,6 +60,6 @@
     "eslint-plugin-react-refresh": "^0.4.6",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.17",
-    "vite": "^6.4.1"
+    "vite": "^5.4.11"
   }
 }

@@ -92,6 +92,7 @@ export default function AuthGate({ children }) {
     } else {
       setUser(data.user);
       localStorage.setItem("nexabot_user_email", data.user.email);
+      // Stay within the app - no redirect needed
     }
     setSending(false);
   };
@@ -102,7 +103,8 @@ export default function AuthGate({ children }) {
   };
 
   const signInWithProvider = async (provider) => {
-    const redirectUrl = window.location.origin + '/app/';
+    // Use /app as the redirect URL
+    const redirectUrl = window.location.origin + '/app';
     await supabase.auth.signInWithOAuth({
       provider: provider,
       options: { redirectTo: redirectUrl }

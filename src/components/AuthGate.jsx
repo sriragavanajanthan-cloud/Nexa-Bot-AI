@@ -3,13 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
 import { Github, Loader2, Mail, Sparkles } from "lucide-react";
+import { initCapacitor, addDeepLinkListener } from "@/lib/capacitor.js";
 
 const LOGO_URL = "https://qxgkityhhwgwohehetek.supabase.co/storage/v1/object/public/Nexa/926442f73_NEXAbotAI.jpg";
-
-// Detect if running on mobile device
-const isMobileDevice = () => {
-  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-};
 
 export default function AuthGate({ children }) {
   const [user, setUser] = useState(null);
@@ -51,28 +47,22 @@ export default function AuthGate({ children }) {
     
     handleAuthCallback();
 
-    // Only load Capacitor on mobile devices
+    // Initialize Capacitor only on mobile
     const setupCapacitor = async () => {
-      if (isMobileDevice()) {
-        try {
-          const { App } = await import('@capacitor/app');
-          App.addListener('appUrlOpen', (event) => {
-            const url = event.url;
-            if (url && url.includes('access_token')) {
-              const fragment = url.split('#')[1];
-              const params = new URLSearchParams(fragment);
-              supabase.auth.setSession({
-                access_token: params.get('access_token'),
-                refresh_token: params.get('refresh_token')
-              }).then(({ data }) => {
-                if (data.user) setUser(data.user);
-              });
-            }
+      await initCapacitor();
+      addDeepLinkListener((event) => {
+        const url = event.url;
+        if (url && url.includes('access_token')) {
+          const fragment = url.split('#')[1];
+          const params = new URLSearchParams(fragment);
+          supabase.auth.setSession({
+            access_token: params.get('access_token'),
+            refresh_token: params.get('refresh_token')
+          }).then(({ data }) => {
+            if (data.user) setUser(data.user);
           });
-        } catch (err) {
-          console.log('Capacitor not available:', err);
         }
-      }
+      });
     };
     
     setupCapacitor();

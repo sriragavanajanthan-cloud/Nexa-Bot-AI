@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build --force && mkdir -p dist/app && cp dist/index.html dist/app/ && cp -r dist/assets dist/app/ && cp favicon.png favicon-32.png dist/app/ && node fix-paths.cjs && cp landing.html dist/index.html && cp download.html dist/",
+    "build": "vite build && mkdir -p dist/app && cp dist/index.html dist/app/ && cp -r dist/assets dist/app/ && cp favicon.png favicon-32.png dist/app/ && node fix-paths.cjs && cp landing.html dist/index.html && cp download.html dist/",
     "preview": "vite preview"
   },
   "dependencies": {

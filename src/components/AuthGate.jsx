@@ -31,8 +31,8 @@ export default function AuthGate({ children }) {
 
     getSession();
 
-    // Handle OAuth callback for mobile
-    const handleDeepLink = async () => {
+    // Handle OAuth callback
+    const handleAuthCallback = async () => {
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const accessToken = hashParams.get('access_token');
       const refreshToken = hashParams.get('refresh_token');
@@ -49,26 +49,33 @@ export default function AuthGate({ children }) {
       }
     };
     
-    handleDeepLink();
+    handleAuthCallback();
 
-    // Add Capacitor deep link listener only on mobile
-    if (isMobileDevice()) {
-      import('@capacitor/app').then(({ App }) => {
-        App.addListener('appUrlOpen', (event) => {
-          const url = event.url;
-          if (url && url.includes('access_token')) {
-            const fragment = url.split('#')[1];
-            const params = new URLSearchParams(fragment);
-            supabase.auth.setSession({
-              access_token: params.get('access_token'),
-              refresh_token: params.get('refresh_token')
-            }).then(({ data }) => {
-              if (data.user) setUser(data.user);
-            });
-          }
-        });
-      }).catch(err => console.log('Capacitor not available:', err));
-    }
+    // Only load Capacitor on mobile devices
+    const setupCapacitor = async () => {
+      if (isMobileDevice()) {
+        try {
+          const { App } = await import('@capacitor/app');
+          App.addListener('appUrlOpen', (event) => {
+            const url = event.url;
+            if (url && url.includes('access_token')) {
+              const fragment = url.split('#')[1];
+              const params = new URLSearchParams(fragment);
+              supabase.auth.setSession({
+                access_token: params.get('access_token'),
+                refresh_token: params.get('refresh_token')
+              }).then(({ data }) => {
+                if (data.user) setUser(data.user);
+              });
+            }
+          });
+        } catch (err) {
+          console.log('Capacitor not available:', err);
+        }
+      }
+    };
+    
+    setupCapacitor();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);

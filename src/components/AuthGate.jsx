@@ -6,6 +6,11 @@ import { Github, Loader2, Mail, Sparkles } from "lucide-react";
 
 const LOGO_URL = "https://qxgkityhhwgwohehetek.supabase.co/storage/v1/object/public/Nexa/926442f73_NEXAbotAI.jpg";
 
+// Detect if running on mobile device
+const isMobileDevice = () => {
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+};
+
 export default function AuthGate({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -26,8 +31,8 @@ export default function AuthGate({ children }) {
 
     getSession();
 
-    // Handle OAuth redirect on page load (for GitHub/Google callback)
-    const handleAuthCallback = async () => {
+    // Handle OAuth callback for mobile
+    const handleDeepLink = async () => {
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const accessToken = hashParams.get('access_token');
       const refreshToken = hashParams.get('refresh_token');
@@ -39,13 +44,31 @@ export default function AuthGate({ children }) {
         });
         if (!error && data.user) {
           setUser(data.user);
-          // Clear the URL hash to clean up
           window.history.replaceState({}, document.title, window.location.pathname);
         }
       }
     };
     
-    handleAuthCallback();
+    handleDeepLink();
+
+    // Add Capacitor deep link listener only on mobile
+    if (isMobileDevice()) {
+      import('@capacitor/app').then(({ App }) => {
+        App.addListener('appUrlOpen', (event) => {
+          const url = event.url;
+          if (url && url.includes('access_token')) {
+            const fragment = url.split('#')[1];
+            const params = new URLSearchParams(fragment);
+            supabase.auth.setSession({
+              access_token: params.get('access_token'),
+              refresh_token: params.get('refresh_token')
+            }).then(({ data }) => {
+              if (data.user) setUser(data.user);
+            });
+          }
+        });
+      }).catch(err => console.log('Capacitor not available:', err));
+    }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
@@ -134,7 +157,6 @@ export default function AuthGate({ children }) {
     });
     
     if (error) {
-      console.error('OAuth error:', error);
       setError(error.message);
     }
   };
@@ -283,9 +305,9 @@ export default function AuthGate({ children }) {
 
           <Button
             onClick={() => signInWithProvider('google')}
-            className="w-full bg-white hover:bg-gray-100 text-black font-semibold flex items-center justify-center gap-2"
+            className="w-full bg-white hover:bg-gray-100 text-black font-semibold"
           >
-            <svg className="w-4 h-4" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 inline mr-2" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -298,7 +320,7 @@ export default function AuthGate({ children }) {
             onClick={() => signInWithProvider('github')}
             className="w-full bg-[#24292e] hover:bg-[#1b1f23] text-white font-semibold"
           >
-            <Github className="w-4 h-4 mr-2" />
+            <Github className="w-4 h-4 inline mr-2" />
             Continue with GitHub
           </Button>
 

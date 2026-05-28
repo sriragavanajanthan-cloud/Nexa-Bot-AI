@@ -1,0 +1,10 @@
+{
+  "name": "nexabot-test",
+  "version": 2,
+  "builds": [
+    { "src": "test.html", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "/test.html" }
+  ]
+}

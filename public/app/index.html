@@ -1,46 +1,16 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loading NEXAbot...</title>
-    <style>
-        body {
-            margin: 0;
-            background: #0a0a0a;
-            color: white;
-            font-family: system-ui;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-        }
-        .loader {
-            text-align: center;
-        }
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(0,255,179,0.3);
-            border-top-color: #00ffb3;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 16px;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-    </style>
-</head>
-<body>
-    <div class="loader">
-        <div class="spinner"></div>
-        <div>Loading NEXAbot.AI...</div>
-    </div>
-    <script>
-        // Load the actual React app from the subdirectory
-        const script = document.createElement('script');
-        script.src = '/react-app/index.js';
-        script.type = 'module';
-        document.head.appendChild(script);
-    </script>
-</body>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="./favicon.png" />
+    <link rel="apple-touch-icon" href="./favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NEXAbot.AI - Chat</title>
+    <script type="module" crossorigin src="./assets/index-CfF4-4dF.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-C79ABYRA.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
 </html>

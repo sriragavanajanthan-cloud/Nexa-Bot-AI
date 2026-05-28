@@ -39,6 +39,7 @@ export default function AuthGate({ children }) {
         });
         if (!error && data.user) {
           setUser(data.user);
+          // Clear the hash from URL
           window.history.replaceState({}, document.title, window.location.pathname);
         }
       }
@@ -122,8 +123,9 @@ export default function AuthGate({ children }) {
   };
 
   const signInWithProvider = async (provider) => {
-    const currentUrl = window.location.origin;
-    const redirectUrl = currentUrl + '/app';
+    // Use the current origin + /app as the redirect URL
+    const redirectUrl = `${window.location.origin}/app`;
+    console.log('Redirect URL:', redirectUrl);
     
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: provider,
@@ -133,6 +135,7 @@ export default function AuthGate({ children }) {
     });
     
     if (error) {
+      console.error('OAuth error:', error);
       setError(error.message);
     }
   };

@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
 import { Github, Loader2, Mail, Sparkles } from "lucide-react";
-import { initCapacitor, addDeepLinkListener } from "@/lib/capacitor.js";
 
 const LOGO_URL = "https://qxgkityhhwgwohehetek.supabase.co/storage/v1/object/public/Nexa/926442f73_NEXAbotAI.jpg";
 
@@ -47,22 +46,30 @@ export default function AuthGate({ children }) {
     
     handleAuthCallback();
 
-    // Initialize Capacitor only on mobile
+    // Only try to load Capacitor on native platforms
     const setupCapacitor = async () => {
-      await initCapacitor();
-      addDeepLinkListener((event) => {
-        const url = event.url;
-        if (url && url.includes('access_token')) {
-          const fragment = url.split('#')[1];
-          const params = new URLSearchParams(fragment);
-          supabase.auth.setSession({
-            access_token: params.get('access_token'),
-            refresh_token: params.get('refresh_token')
-          }).then(({ data }) => {
-            if (data.user) setUser(data.user);
+      // @ts-ignore
+      if (window.Capacitor && window.Capacitor.isNativePlatform) {
+        try {
+          const { initCapacitor, addDeepLinkListener } = await import('@/lib/capacitor.js');
+          await initCapacitor();
+          addDeepLinkListener((event) => {
+            const url = event.url;
+            if (url && url.includes('access_token')) {
+              const fragment = url.split('#')[1];
+              const params = new URLSearchParams(fragment);
+              supabase.auth.setSession({
+                access_token: params.get('access_token'),
+                refresh_token: params.get('refresh_token')
+              }).then(({ data }) => {
+                if (data.user) setUser(data.user);
+              });
+            }
           });
+        } catch (err) {
+          console.log('Capacitor setup failed:', err);
         }
-      });
+      }
     };
     
     setupCapacitor();

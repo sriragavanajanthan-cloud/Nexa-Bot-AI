@@ -26,7 +26,7 @@ export default function AuthGate({ children }) {
 
     getSession();
 
-    // Handle OAuth callback
+    // Handle OAuth callback from URL hash
     const handleAuthCallback = async () => {
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const accessToken = hashParams.get('access_token');
@@ -45,34 +45,6 @@ export default function AuthGate({ children }) {
     };
     
     handleAuthCallback();
-
-    // Only try to load Capacitor on native platforms
-    const setupCapacitor = async () => {
-      // @ts-ignore
-      if (window.Capacitor && window.Capacitor.isNativePlatform) {
-        try {
-          const { initCapacitor, addDeepLinkListener } = await import('@/lib/capacitor.js');
-          await initCapacitor();
-          addDeepLinkListener((event) => {
-            const url = event.url;
-            if (url && url.includes('access_token')) {
-              const fragment = url.split('#')[1];
-              const params = new URLSearchParams(fragment);
-              supabase.auth.setSession({
-                access_token: params.get('access_token'),
-                refresh_token: params.get('refresh_token')
-              }).then(({ data }) => {
-                if (data.user) setUser(data.user);
-              });
-            }
-          });
-        } catch (err) {
-          console.log('Capacitor setup failed:', err);
-        }
-      }
-    };
-    
-    setupCapacitor();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);

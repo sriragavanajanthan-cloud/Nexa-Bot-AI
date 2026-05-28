@@ -10,4 +10,26 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  define: {
+    'process.env': {},
+    'global': 'window',
+  },
+  optimizeDeps: {
+    exclude: ['@capacitor/app', '@capacitor/browser', '@capacitor/core'],
+  },
+  build: {
+    commonjsOptions: {
+      transformMixedEsModules: true,
+    },
+    rollupOptions: {
+      external: ['@capacitor/app', '@capacitor/browser', '@capacitor/core'],
+      output: {
+        globals: {
+          '@capacitor/app': 'CapacitorApp',
+          '@capacitor/browser': 'CapacitorBrowser',
+          '@capacitor/core': 'CapacitorCore',
+        }
+      }
+    }
+  }
 })

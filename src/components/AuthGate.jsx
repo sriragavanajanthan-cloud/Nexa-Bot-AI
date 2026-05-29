@@ -26,7 +26,6 @@ export default function AuthGate({ children }) {
 
     getSession();
 
-    // Handle OAuth callback from URL hash
     const handleAuthCallback = async () => {
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const accessToken = hashParams.get('access_token');
@@ -39,7 +38,6 @@ export default function AuthGate({ children }) {
         });
         if (!error && data.user) {
           setUser(data.user);
-          // Clear the hash from URL
           window.history.replaceState({}, document.title, window.location.pathname);
         }
       }
@@ -123,9 +121,7 @@ export default function AuthGate({ children }) {
   };
 
   const signInWithProvider = async (provider) => {
-    // Use the current origin + /app as the redirect URL
     const redirectUrl = `${window.location.origin}/app`;
-    console.log('Redirect URL:', redirectUrl);
     
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: provider,
@@ -135,7 +131,6 @@ export default function AuthGate({ children }) {
     });
     
     if (error) {
-      console.error('OAuth error:', error);
       setError(error.message);
     }
   };

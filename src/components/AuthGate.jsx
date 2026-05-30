@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/lib/supabase";
 import { Github, Loader2, Mail, Sparkles } from "lucide-react";
 
 const LOGO_URL = "https://qxgkityhhwgwohehetek.supabase.co/storage/v1/object/public/Nexa/926442f73_NEXAbotAI.jpg";
@@ -26,6 +26,11 @@ export default function AuthGate({ children }) {
 
     getSession();
 
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Handle OAuth callback from URL hash
     const handleAuthCallback = async () => {
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const accessToken = hashParams.get('access_token');
@@ -44,10 +49,6 @@ export default function AuthGate({ children }) {
     };
     
     handleAuthCallback();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
 
     return () => subscription.unsubscribe();
   }, []);

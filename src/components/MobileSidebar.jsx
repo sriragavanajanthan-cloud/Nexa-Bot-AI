@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
-// Tools - ONLY ICONS have rainbow colors, labels stay white
+// Tools - ICONS ALWAYS have rainbow colors (active AND inactive)
 const TOOLS = [
   { path: '/chat', label: 'Chat', icon: MessageCircle, iconColor: 'text-red-400' },
   { path: '/memory-bank', label: 'Memory Bank', icon: Brain, iconColor: 'text-orange-400' },
@@ -140,7 +140,7 @@ export default function MobileSidebar({ isOpen, onClose }) {
           <p className="text-sm font-medium text-white mt-1 truncate">{userEmail}</p>
         </div>
 
-        {/* Tools Section - ONLY ICONS are colored, labels white */}
+        {/* Tools Section - ICONS ALWAYS COLORED */}
         <div className="px-5 pt-5 pb-4 border-b border-gray-800">
           <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">
             Tools
@@ -164,7 +164,8 @@ export default function MobileSidebar({ isOpen, onClose }) {
                       }
                     `}
                   >
-                    <Icon size={18} className={isActive ? tool.iconColor : 'text-gray-500'} />
+                    {/* Icon ALWAYS has its rainbow color */}
+                    <Icon size={18} className={tool.iconColor} />
                     <span className={isActive ? 'text-white' : 'text-gray-300'}>
                       {tool.label}
                     </span>

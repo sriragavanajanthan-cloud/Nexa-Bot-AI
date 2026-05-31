@@ -50,38 +50,27 @@ export default function MobileLayout({ children }) {
   };
 
   // Mobile view: only hamburger menu, NO bottom bar
-  if (isMobile) {
-    return (
-      <div className="min-h-screen bg-[#111111]">
-        {/* Header with Hamburger Menu */}
-        <header className="fixed top-0 left-0 right-0 z-30 bg-[#111111]/90 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center justify-between">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-          >
-            <Menu className="w-5 h-5 text-white" />
-          </button>
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-r from-cyan-500 to-green-500 flex items-center justify-center">
-              <Sparkles className="w-3.5 h-3.5 text-black" />
-            </div>
-            <span className="text-sm font-semibold text-white">NEXAbot.AI</span>
-          </div>
-          <div className="w-9" />
-        </header>
+  // In MobileLayout.jsx - Mobile view section
+if (isMobile) {
+  return (
+    <div className="min-h-screen bg-[#111111]">
+      {/* Header - keep as is */}
+      <header className="fixed top-0 left-0 right-0 z-30 bg-[#111111]/90 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center justify-between">
+        {/* ... header content ... */}
+      </header>
 
-        {/* Sidebar Drawer */}
-        <MobileSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      {/* Sidebar Drawer - Full screen */}
+      <MobileSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-        {/* Main Content */}
-        <main className="pt-14 pb-6">
-          <div className="container mx-auto px-4">
-            {children}
-          </div>
-        </main>
-      </div>
-    );
-  }
+      {/* Main Content */}
+      <main className="pt-14 pb-6">
+        <div className="container mx-auto px-4">
+          {children}
+        </div>
+      </main>
+    </div>
+  );
+}
 
   // Desktop view: Sidebar always visible
   return (

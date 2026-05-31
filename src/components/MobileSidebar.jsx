@@ -7,16 +7,16 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
-// Tools with RAINBOW COLOR ORDER (Red, Orange, Yellow, Green, Blue, Indigo, Violet, Cyan)
+// Tools - ONLY ICONS have rainbow colors, labels stay white
 const TOOLS = [
-  { path: '/chat', label: 'Chat', icon: MessageCircle, iconColor: 'text-red-400', bgColor: 'bg-red-500/20', borderColor: 'border-red-500/30' },
-  { path: '/memory-bank', label: 'Memory Bank', icon: Brain, iconColor: 'text-orange-400', bgColor: 'bg-orange-500/20', borderColor: 'border-orange-500/30' },
-  { path: '/ai-detector', label: 'AI Detector', icon: Shield, iconColor: 'text-yellow-400', bgColor: 'bg-yellow-500/20', borderColor: 'border-yellow-500/30' },
-  { path: '/image-gen', label: 'Image Gen', icon: Image, iconColor: 'text-green-400', bgColor: 'bg-green-500/20', borderColor: 'border-green-500/30' },
-  { path: '/image-editor', label: 'Image Editor', icon: Pencil, iconColor: 'text-blue-400', bgColor: 'bg-blue-500/20', borderColor: 'border-blue-500/30' },
-  { path: '/graphing', label: 'Graphs', icon: BarChart3, iconColor: 'text-indigo-400', bgColor: 'bg-indigo-500/20', borderColor: 'border-indigo-500/30' },
-  { path: '/image-amplifier', label: 'Amplify', icon: Search, iconColor: 'text-violet-400', bgColor: 'bg-violet-500/20', borderColor: 'border-violet-500/30' },
-  { path: '/video-studio', label: 'Video Studio', icon: Video, iconColor: 'text-cyan-400', bgColor: 'bg-cyan-500/20', borderColor: 'border-cyan-500/30' },
+  { path: '/chat', label: 'Chat', icon: MessageCircle, iconColor: 'text-red-400' },
+  { path: '/memory-bank', label: 'Memory Bank', icon: Brain, iconColor: 'text-orange-400' },
+  { path: '/ai-detector', label: 'AI Detector', icon: Shield, iconColor: 'text-yellow-400' },
+  { path: '/image-gen', label: 'Image Gen', icon: Image, iconColor: 'text-green-400' },
+  { path: '/image-editor', label: 'Image Editor', icon: Pencil, iconColor: 'text-blue-400' },
+  { path: '/graphing', label: 'Graphs', icon: BarChart3, iconColor: 'text-indigo-400' },
+  { path: '/image-amplifier', label: 'Amplify', icon: Search, iconColor: 'text-violet-400' },
+  { path: '/video-studio', label: 'Video Studio', icon: Video, iconColor: 'text-cyan-400' },
 ];
 
 export default function MobileSidebar({ isOpen, onClose }) {
@@ -117,8 +117,8 @@ export default function MobileSidebar({ isOpen, onClose }) {
         <div className="p-5 border-b border-gray-800">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-red-500 via-green-500 to-blue-500 flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-cyan-500 to-green-500 flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-black" />
               </div>
               <div>
                 <span className="font-bold text-white text-lg">NEXAbot.AI</span>
@@ -140,7 +140,7 @@ export default function MobileSidebar({ isOpen, onClose }) {
           <p className="text-sm font-medium text-white mt-1 truncate">{userEmail}</p>
         </div>
 
-        {/* Tools Section - RAINBOW COLORED ICONS with labels */}
+        {/* Tools Section - ONLY ICONS are colored, labels white */}
         <div className="px-5 pt-5 pb-4 border-b border-gray-800">
           <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">
             Tools
@@ -159,13 +159,15 @@ export default function MobileSidebar({ isOpen, onClose }) {
                       flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
                       transition-all duration-200
                       ${isActive 
-                        ? `${tool.bgColor} ${tool.iconColor} border ${tool.borderColor} shadow-lg` 
-                        : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700 hover:text-white'
+                        ? 'bg-white/10 border border-white/20' 
+                        : 'bg-gray-800/50 hover:bg-gray-700'
                       }
                     `}
                   >
                     <Icon size={18} className={isActive ? tool.iconColor : 'text-gray-500'} />
-                    <span className={isActive ? tool.iconColor : 'text-gray-300'}>{tool.label}</span>
+                    <span className={isActive ? 'text-white' : 'text-gray-300'}>
+                      {tool.label}
+                    </span>
                   </button>
                 );
               })}

@@ -8,22 +8,22 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import MobileSidebar from './MobileSidebar';
 import { supabase } from '@/lib/supabase';
 
-// TOOLS array with Lucide icons (no emojis)
+// TOOLS array for desktop view
 const TOOLS = [
-  { id: "chat", path: "/chat", label: "Chat", icon: MessageCircle },
-  { id: "videogen", path: "/video-studio", label: "Video Studio", icon: Video },
-  { id: "imagegen", path: "/image-gen", label: "Image Gen", icon: Image },
-  { id: "memory", path: "/memory-bank", label: "Memory Bank", icon: Brain },
-  { id: "aidetect", path: "/ai-detector", label: "AI Detector", icon: Shield },
-  { id: "imageedit", path: "/image-editor", label: "Image Editor", icon: Pencil },
-  { id: "graph", path: "/graphing", label: "Graphing", icon: BarChart3 },
-  { id: "amplify", path: "/image-amplifier", label: "Amplify", icon: Search },
+  { id: "chat", path: "/chat", label: "Chat", icon: MessageCircle, iconColor: "text-red-400" },
+  { id: "memory", path: "/memory-bank", label: "Memory Bank", icon: Brain, iconColor: "text-orange-400" },
+  { id: "aidetect", path: "/ai-detector", label: "AI Detector", icon: Shield, iconColor: "text-yellow-400" },
+  { id: "imagegen", path: "/image-gen", label: "Image Gen", icon: Image, iconColor: "text-green-400" },
+  { id: "imageedit", path: "/image-editor", label: "Image Editor", icon: Pencil, iconColor: "text-blue-400" },
+  { id: "graph", path: "/graphing", label: "Graphs", icon: BarChart3, iconColor: "text-indigo-400" },
+  { id: "amplify", path: "/image-amplifier", label: "Amplify", icon: Search, iconColor: "text-violet-400" },
+  { id: "videogen", path: "/video-studio", label: "Video Studio", icon: Video, iconColor: "text-cyan-400" },
 ];
 
 export default function MobileLayout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userEmail, setUserEmail] = useState('');
 
@@ -31,7 +31,6 @@ export default function MobileLayout({ children }) {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
@@ -49,33 +48,54 @@ export default function MobileLayout({ children }) {
     window.location.href = '/app';
   };
 
-  // Mobile view: only hamburger menu, NO bottom bar
-  // In MobileLayout.jsx - Mobile view section
-if (isMobile) {
-  return (
-    <div className="min-h-screen bg-[#111111]">
-      {/* Header - keep as is */}
-      <header className="fixed top-0 left-0 right-0 z-30 bg-[#111111]/90 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center justify-between">
-        {/* ... header content ... */}
-      </header>
+  const openSidebar = () => {
+    console.log('Opening sidebar');
+    setSidebarOpen(true);
+  };
 
-      {/* Sidebar Drawer - Full screen */}
-      <MobileSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+  const closeSidebar = () => {
+    console.log('Closing sidebar');
+    setSidebarOpen(false);
+  };
 
-      {/* Main Content */}
-      <main className="pt-14 pb-6">
-        <div className="container mx-auto px-4">
-          {children}
-        </div>
-      </main>
-    </div>
-  );
-}
+  // Mobile view
+  if (isMobile) {
+    return (
+      <div className="min-h-screen bg-[#111111]">
+        {/* Header with Hamburger Menu */}
+        <header className="fixed top-0 left-0 right-0 z-30 bg-[#111111]/90 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center justify-between">
+          <button
+            onClick={openSidebar}
+            className="p-2 rounded-lg hover:bg-white/10 transition-colors active:bg-white/20"
+            aria-label="Open menu"
+          >
+            <Menu className="w-6 h-6 text-white" />
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-cyan-500 to-green-500 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-black" />
+            </div>
+            <span className="text-sm font-semibold text-white">NEXAbot.AI</span>
+          </div>
+          <div className="w-10" />
+        </header>
 
-  // Desktop view: Sidebar always visible
+        {/* Sidebar Component */}
+        <MobileSidebar isOpen={sidebarOpen} onClose={closeSidebar} />
+
+        {/* Main Content */}
+        <main className="pt-16 pb-6">
+          <div className="container mx-auto px-4">
+            {children}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Desktop view
   return (
     <div className="min-h-screen bg-[#111111] flex">
-      {/* Desktop Sidebar */}
       <aside className="fixed left-0 top-0 bottom-0 w-72 bg-[#1a1a1a] border-r border-white/10 flex flex-col overflow-y-auto">
         <div className="p-5 border-b border-white/10">
           <div className="flex items-center gap-3">
@@ -97,7 +117,7 @@ if (isMobile) {
         <div className="flex-1 py-4">
           <div className="px-4">
             <p className="text-xs text-white/50 uppercase tracking-wider mb-3 px-2">Tools</p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
               {TOOLS.map((tool) => {
                 const Icon = tool.icon;
                 const isActive = location.pathname === tool.path;
@@ -105,14 +125,17 @@ if (isMobile) {
                   <button
                     key={tool.path}
                     onClick={() => navigate(tool.path)}
-                    className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 ${
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 ${
                       isActive 
-                        ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 text-cyan-400' 
-                        : 'bg-gray-800/50 hover:bg-gray-800 text-white/60 hover:text-white'
+                        ? 'bg-gradient-to-r from-white/10 to-transparent border-l-2 border-white/30' 
+                        : 'hover:bg-white/5'
                     }`}
                   >
-                    <Icon className="w-5 h-5" />
-                    <span className="text-xs font-medium">{tool.label}</span>
+                    <Icon className={`w-5 h-5 ${tool.iconColor}`} />
+                    <span className={`text-sm font-medium ${isActive ? 'text-white' : 'text-gray-400'}`}>
+                      {tool.label}
+                    </span>
+                    {isActive && <span className="ml-auto text-xs text-cyan-400">●</span>}
                   </button>
                 );
               })}
@@ -128,17 +151,12 @@ if (isMobile) {
             <LogOut className="w-5 h-5 text-red-400" />
             <span className="text-sm text-red-400 font-medium">Sign Out</span>
           </button>
-          <p className="text-xs text-gray-600 text-center mt-4">
-            NEXAbot.AI v1.0
-          </p>
+          <p className="text-xs text-gray-600 text-center mt-4">NEXAbot.AI v1.0</p>
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 ml-72">
-        <div className="container mx-auto px-6 py-6">
-          {children}
-        </div>
+        <div className="container mx-auto px-6 py-6">{children}</div>
       </main>
     </div>
   );

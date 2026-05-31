@@ -1,14 +1,21 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Vercel Test</title>
+    <title>Test</title>
 </head>
 <body>
-    <h1>Vercel is working!</h1>
-    <p>If you can see this, the deployment is successful.</p>
-    <p>Current time: <span id="time"></span></p>
-    <script>
-        document.getElementById('time').innerText = new Date().toLocaleString();
+    <div id="root"></div>
+    <script type="module">
+        import React from 'react';
+        import ReactDOM from 'react-dom/client';
+        
+        console.log('React loaded:', !!React);
+        console.log('ReactDOM loaded:', !!ReactDOM);
+        
+        const root = document.getElementById('root');
+        root.innerHTML = '<div style="color: white; background: black; padding: 20px;"><h1>✅ React is working!</h1><p>If you see this, React is loading correctly.</p></div>';
+        
+        console.log('Test complete');
     </script>
 </body>
 </html>

@@ -1,9 +1,17 @@
 {
   "routes": [
-    { "src": "/", "dest": "/index.html" },
-    { "src": "/app", "dest": "/app/index.html" },
-    { "src": "/app/assets/(.*)", "dest": "/app/assets/$1" },
-    { "src": "/app/(.*)", "dest": "/app/index.html" },
-    { "src": "/download", "dest": "/download.html" }
+    { "src": "/", "dest": "/landing.html" },
+    { "src": "/login", "dest": "/index.html" },
+    { "src": "/chat", "dest": "/index.html" },
+    { "src": "/video-studio", "dest": "/index.html" },
+    { "src": "/image-gen", "dest": "/index.html" },
+    { "src": "/memory-bank", "dest": "/index.html" },
+    { "src": "/ai-detector", "dest": "/index.html" },
+    { "src": "/image-editor", "dest": "/index.html" },
+    { "src": "/graphing", "dest": "/index.html" },
+    { "src": "/image-amplifier", "dest": "/index.html" },
+    { "src": "/settings", "dest": "/index.html" },
+    { "src": "/app", "dest": "/index.html" },
+    { "src": "/app/(.*)", "dest": "/index.html" }
   ]
 }

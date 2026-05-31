@@ -1,10 +1,11 @@
+import Logo from "./Logo";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Github, Loader2, Mail, Sparkles } from "lucide-react";
 
-const LOGO_URL = "https://qxgkityhhwgwohehetek.supabase.co/storage/v1/object/public/Nexa/926442f73_NEXAbotAI.jpg";
+const LOGO_URL = "https://qxgkityhhwgwohehetek.supabase.co/storage/v1/object/public/Nexa/favicon.png";
 
 export default function AuthGate({ children }) {
   const [user, setUser] = useState(null);
@@ -43,6 +44,8 @@ export default function AuthGate({ children }) {
         });
         if (!error && data.user) {
           setUser(data.user);
+      localStorage.setItem("supabaseSession", "true");
+      window.location.href = "/chat";
           window.history.replaceState({}, document.title, window.location.pathname);
         }
       }
@@ -111,6 +114,8 @@ export default function AuthGate({ children }) {
       setError(authError.message);
     } else {
       setUser(data.user);
+      localStorage.setItem("supabaseSession", "true");
+      window.location.href = "/chat";
       localStorage.setItem("nexabot_user_email", data.user.email);
     }
     setSending(false);

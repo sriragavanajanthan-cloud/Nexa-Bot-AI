@@ -7,16 +7,16 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
-// Tools with display names
+// Tools with colorful icons - Horizontal layout (icon + label)
 const TOOLS = [
-  { path: '/chat', label: 'Chat', icon: MessageCircle },
-  { path: '/memory-bank', label: 'Memory Bank', icon: Brain },
-  { path: '/ai-detector', label: 'AI Detector', icon: Shield },
-  { path: '/image-gen', label: 'Image Generator', icon: Image },
-  { path: '/image-editor', label: 'Image Editor', icon: Pencil },
-  { path: '/graphing', label: 'Graphing', icon: BarChart3 },
-  { path: '/image-amplifier', label: 'Image Amplifier', icon: Search },
-  { path: '/video-studio', label: 'AI Video Studio', icon: Video },
+  { path: '/chat', label: 'Chat', icon: MessageCircle, iconColor: 'text-cyan-400', bgColor: 'bg-cyan-500/20' },
+  { path: '/memory-bank', label: 'Memory Bank', icon: Brain, iconColor: 'text-green-400', bgColor: 'bg-green-500/20' },
+  { path: '/ai-detector', label: 'AI Detector', icon: Shield, iconColor: 'text-red-400', bgColor: 'bg-red-500/20' },
+  { path: '/image-gen', label: 'Image Gen', icon: Image, iconColor: 'text-pink-400', bgColor: 'bg-pink-500/20' },
+  { path: '/image-editor', label: 'Image Editor', icon: Pencil, iconColor: 'text-yellow-400', bgColor: 'bg-yellow-500/20' },
+  { path: '/graphing', label: 'Graphs', icon: BarChart3, iconColor: 'text-blue-400', bgColor: 'bg-blue-500/20' },
+  { path: '/image-amplifier', label: 'Amplify', icon: Search, iconColor: 'text-orange-400', bgColor: 'bg-orange-500/20' },
+  { path: '/video-studio', label: 'Video Studio', icon: Video, iconColor: 'text-purple-400', bgColor: 'bg-purple-500/20' },
 ];
 
 export default function MobileSidebar({ isOpen, onClose }) {
@@ -95,7 +95,7 @@ export default function MobileSidebar({ isOpen, onClose }) {
 
   return (
     <>
-      {/* Overlay - dark background when sidebar is open */}
+      {/* Overlay */}
       {isOpen && (
         <div 
           className="fixed inset-0 bg-black/80 z-40 transition-opacity duration-300"
@@ -103,7 +103,7 @@ export default function MobileSidebar({ isOpen, onClose }) {
         />
       )}
       
-      {/* Sidebar Drawer - FULL WIDTH on mobile */}
+      {/* Sidebar Drawer - Full width on mobile */}
       <div className={`
         fixed top-0 left-0 h-full z-50 
         w-full md:w-96
@@ -140,14 +140,15 @@ export default function MobileSidebar({ isOpen, onClose }) {
           <p className="text-sm font-medium text-white mt-1 truncate">{userEmail}</p>
         </div>
 
-        {/* Tools Section - Full Width Horizontal Row */}
+        {/* Tools Section - HORIZONTAL ROW with labels next to icons */}
         <div className="px-5 pt-5 pb-4 border-b border-gray-800">
           <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">
             Tools
           </p>
-          <div className="overflow-x-auto scrollbar-hide -mx-1 px-1">
+          <div className="overflow-x-auto scrollbar-hide pb-2">
             <div className="flex gap-2 min-w-max">
               {TOOLS.map((tool) => {
+                const Icon = tool.icon;
                 const isActive = location.pathname === tool.path;
                 
                 return (
@@ -155,15 +156,16 @@ export default function MobileSidebar({ isOpen, onClose }) {
                     key={tool.path}
                     onClick={() => handleNavigation(tool.path)}
                     className={`
-                      px-5 py-2.5 rounded-full text-sm font-medium whitespace-nowrap
+                      flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
                       transition-all duration-200
                       ${isActive 
-                        ? 'bg-white text-black' 
+                        ? `${tool.bgColor} ${tool.iconColor} border border-white/20` 
                         : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700 hover:text-white'
                       }
                     `}
                   >
-                    {tool.label}
+                    <Icon size={18} className={isActive ? tool.iconColor : 'text-gray-400'} />
+                    <span>{tool.label}</span>
                   </button>
                 );
               })}
@@ -171,7 +173,7 @@ export default function MobileSidebar({ isOpen, onClose }) {
           </div>
         </div>
 
-        {/* Chat History Section - Takes remaining space */}
+        {/* Chat History Section */}
         <div className="flex-1 overflow-y-auto">
           <div className="px-5 py-4">
             <div className="flex items-center justify-between mb-3">
@@ -227,7 +229,7 @@ export default function MobileSidebar({ isOpen, onClose }) {
           </div>
         </div>
 
-        {/* Footer with Sign Out - Sticky at bottom */}
+        {/* Footer with Sign Out */}
         <div className="p-5 border-t border-gray-800 bg-[#0f0f0f]">
           <button
             onClick={handleSignOut}

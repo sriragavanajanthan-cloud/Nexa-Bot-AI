@@ -1,14 +1,12 @@
 import { useState, useRef } from "react";
-import { Send, Paperclip, Mic, MicOff, X, File, Wrench } from "lucide-react";
+import { Send, Paperclip, Mic, MicOff, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { uploadFile } from "@/lib/api";
-import ToolsPanel from "@/components/tools/ToolsPanel";
 
 export default function ChatInput({ onSend, isLoading }) {
-  const [toolsOpen, setToolsOpen] = useState(false);
   const [input, setInput] = useState("");
-  const [attachedFiles, setAttachedFiles] = useState([]); // { name, url }
+  const [attachedFiles, setAttachedFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [recording, setRecording] = useState(false);
   const textareaRef = useRef(null);
@@ -79,20 +77,14 @@ export default function ChatInput({ onSend, isLoading }) {
   const canSend = (input.trim() || attachedFiles.length > 0) && !isLoading && !uploading;
 
   return (
-    <div className="relative p-4 border-t border-white/10 bg-[#0d0d0d]">
-      {/* Tools Popover */}
-      {toolsOpen && (
-        <div className="absolute bottom-full left-4 mb-2 z-50 rounded-2xl overflow-hidden shadow-2xl border border-white/10" style={{ width: 380, maxHeight: "70vh" }}>
-          <ToolsPanel onClose={() => setToolsOpen(false)} />
-        </div>
-      )}
-      <div className="max-w-5xl mx-auto space-y-2">
-        {/* Attached files */}
+    <div className="border-t border-white/10 bg-[#111111] p-4">
+      <div className="max-w-3xl mx-auto">
+        {/* Attached files preview */}
         {attachedFiles.length > 0 && (
-          <div className="flex flex-wrap gap-2 px-1">
+          <div className="flex flex-wrap gap-2 mb-2 px-1">
             {attachedFiles.map((file, i) => (
-              <div key={i} className="flex items-center gap-1.5 bg-white/10 rounded-lg px-2 py-1 text-xs text-white/80">
-                <File className="w-3 h-3 text-cyan-400" />
+              <div key={i} className="flex items-center gap-1.5 bg-gray-800 rounded-lg px-2 py-1 text-xs text-white/80">
+                <Paperclip className="w-3 h-3 text-cyan-400" />
                 <span className="max-w-[140px] truncate">{file.name}</span>
                 <button onClick={() => removeFile(i)} className="text-white/40 hover:text-white ml-1">
                   <X className="w-3 h-3" />
@@ -102,67 +94,58 @@ export default function ChatInput({ onSend, isLoading }) {
           </div>
         )}
 
-        <div className="flex items-end gap-2 bg-[#1a1a1a] rounded-2xl border border-white/10 p-3 focus-within:border-cyan-500/50 transition-colors">
-          {/* File attach */}
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
+        {/* Input row */}
+        <div className="flex items-end gap-2 bg-[#1a1a1a] rounded-2xl border border-white/10 p-2 focus-within:border-cyan-500/50 transition-colors">
+          {/* Attach button */}
+          <button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading || isLoading}
-            className="text-white/40 hover:text-white hover:bg-white/10 w-8 h-8 shrink-0"
+            className="text-gray-400 hover:text-white hover:bg-white/10 p-2 rounded-xl transition-colors"
             title="Attach file"
           >
-            <Paperclip className="w-4 h-4" />
-          </Button>
+            <Paperclip className="w-5 h-5" />
+          </button>
           <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileChange} />
 
-          {/* Tools toggle */}
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => setToolsOpen(v => !v)}
-            className={`w-8 h-8 shrink-0 ${toolsOpen ? "text-white bg-white/10" : "text-white/40 hover:text-white hover:bg-white/10"}`}
-            title="Tools"
-          >
-            <Wrench className="w-4 h-4" />
-          </Button>
-
-          <Textarea
+          {/* Text input */}
+          <textarea
             ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={recording ? "Listening..." : uploading ? "Uploading..." : "Message NEXAbot.AI..."}
-            className="flex-1 bg-transparent border-none resize-none text-white placeholder:text-white/30 focus-visible:ring-0 focus-visible:ring-offset-0 min-h-[24px] max-h-32 text-sm"
+            placeholder={recording ? "Listening..." : "Message NEXAbot.AI..."}
             rows={1}
+            className="flex-1 bg-transparent border-none resize-none text-white placeholder:text-gray-500 focus:outline-none min-h-[44px] max-h-32 py-2 text-base"
             disabled={isLoading}
           />
 
-          {/* Voice record */}
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
+          {/* Voice button */}
+          <button
             onClick={toggleRecording}
             disabled={isLoading}
-            className={`w-8 h-8 shrink-0 ${recording ? "text-red-400 animate-pulse hover:text-red-300" : "text-white/40 hover:text-white hover:bg-white/10"}`}
+            className={`p-2 rounded-xl transition-colors ${
+              recording 
+                ? "text-red-400 bg-red-500/10" 
+                : "text-gray-400 hover:text-white hover:bg-white/10"
+            }`}
             title={recording ? "Stop recording" : "Voice input"}
           >
-            {recording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-          </Button>
+            {recording ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+          </button>
 
-          <Button
+          {/* Send button */}
+          <button
             onClick={handleSend}
             disabled={!canSend}
-            size="icon"
-            className="bg-gradient-to-r from-cyan-500 to-green-400 hover:opacity-90 text-black rounded-xl w-9 h-9 shrink-0 disabled:opacity-30"
+            className={`p-2 rounded-xl transition-all ${
+              canSend
+                ? "bg-gradient-to-r from-cyan-500 to-green-500 text-black hover:opacity-90"
+                : "bg-gray-700 text-gray-500 cursor-not-allowed"
+            }`}
           >
-            <Send className="w-4 h-4" />
-          </Button>
+            <Send className="w-5 h-5" />
+          </button>
         </div>
-        <p className="text-center text-white/20 text-xs">NEXAbot.AI can make mistakes. Consider checking important information.</p>
       </div>
     </div>
   );

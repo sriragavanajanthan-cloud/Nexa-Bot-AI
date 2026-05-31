@@ -1,19 +1,19 @@
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
-import { File } from "lucide-react";
+import { File, User, Bot } from "lucide-react";
 
 export default function MessageBubble({ message }) {
   const isUser = message.role === "user";
 
   return (
-    <div className={cn("flex gap-3 mb-4", isUser ? "justify-end" : "justify-start")}>
+    <div className={cn("flex gap-3 mb-6", isUser ? "justify-end" : "justify-start")}>
       {!isUser && (
         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-green-400 flex items-center justify-center shrink-0 mt-1">
-          <span className="text-black text-xs font-bold">N</span>
+          <Bot className="w-4 h-4 text-black" />
         </div>
       )}
       <div className={cn(
-        "max-w-[75%] rounded-2xl px-4 py-3 text-sm",
+        "max-w-[80%] rounded-2xl px-5 py-3 text-sm",
         isUser
           ? "bg-gradient-to-br from-cyan-500/20 to-green-400/20 border border-cyan-500/30 text-white"
           : "bg-[#1a1a1a] border border-white/10 text-white/90"
@@ -33,12 +33,11 @@ export default function MessageBubble({ message }) {
           </div>
         )}
         {isUser ? (
-          <p className="leading-relaxed">{message.content}</p>
+          <p className="leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
         ) : (
           <ReactMarkdown
             className="prose prose-sm prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
             components={{
-              // @ts-ignore
               code: ({ inline, children, ...props }) =>
                 inline ? (
                   <code className="px-1.5 py-0.5 rounded bg-white/10 text-cyan-300 text-xs" {...props}>{children}</code>
@@ -51,23 +50,19 @@ export default function MessageBubble({ message }) {
               ul: ({ children }) => <ul className="my-1 ml-4 list-disc">{children}</ul>,
               ol: ({ children }) => <ol className="my-1 ml-4 list-decimal">{children}</ol>,
               li: ({ children }) => <li className="my-0.5">{children}</li>,
-              h1: ({ children }) => <h1 className="text-lg font-bold my-2 text-white">{children}</h1>,
-              h2: ({ children }) => <h2 className="text-base font-bold my-2 text-white">{children}</h2>,
-              h3: ({ children }) => <h3 className="text-sm font-bold my-2 text-white">{children}</h3>,
               strong: ({ children }) => <strong className="text-white font-semibold">{children}</strong>,
-              a: ({ children, ...props }) => <a className="text-cyan-400 underline" target="_blank" rel="noopener noreferrer" {...props}>{children}</a>,
             }}
           >
             {message.content}
           </ReactMarkdown>
         )}
-        <p className="text-white/30 text-xs mt-1">
+        <p className="text-white/30 text-[10px] mt-2">
           {message.timestamp ? new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
         </p>
       </div>
       {isUser && (
         <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0 mt-1">
-          <span className="text-white/70 text-xs font-bold">You</span>
+          <User className="w-4 h-4 text-white/70" />
         </div>
       )}
     </div>

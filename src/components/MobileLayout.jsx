@@ -1,30 +1,28 @@
 import { useState, useEffect } from 'react';
-import { Menu, Sparkles } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom'; // Add useLocation
+import { 
+  Menu, Sparkles, LogOut, 
+  MessageCircle, Video, Image, Brain, 
+  Shield, Pencil, BarChart3, Search 
+} from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import MobileSidebar from './MobileSidebar';
 import { supabase } from '@/lib/supabase';
 
-// Define TOOLS array here (same as in MobileSidebar)
+// TOOLS array with Lucide icons (no emojis)
 const TOOLS = [
-  { path: '/chat', icon: MessageCircle, label: 'Chat', color: 'from-cyan-500 to-blue-500' },
-  { path: '/video-studio', icon: Video, label: 'Video', color: 'from-purple-500 to-pink-500' },
-  { path: '/image-gen', icon: Image, label: 'Image', color: 'from-pink-500 to-rose-500' },
-  { path: '/memory-bank', icon: Brain, label: 'Memory', color: 'from-green-500 to-emerald-500' },
-  { path: '/ai-detector', icon: Shield, label: 'Detector', color: 'from-red-500 to-orange-500' },
-  { path: '/image-editor', icon: Pencil, label: 'Editor', color: 'from-yellow-500 to-amber-500' },
-  { path: '/graphing', icon: BarChart3, label: 'Graphs', color: 'from-blue-500 to-indigo-500' },
-  { path: '/image-amplifier', icon: Search, label: 'Amplify', color: 'from-orange-500 to-red-500' },
+  { id: "chat", path: "/chat", label: "Chat", icon: MessageCircle },
+  { id: "videogen", path: "/video-studio", label: "Video Studio", icon: Video },
+  { id: "imagegen", path: "/image-gen", label: "Image Gen", icon: Image },
+  { id: "memory", path: "/memory-bank", label: "Memory Bank", icon: Brain },
+  { id: "aidetect", path: "/ai-detector", label: "AI Detector", icon: Shield },
+  { id: "imageedit", path: "/image-editor", label: "Image Editor", icon: Pencil },
+  { id: "graph", path: "/graphing", label: "Graphing", icon: BarChart3 },
+  { id: "amplify", path: "/image-amplifier", label: "Amplify", icon: Search },
 ];
-
-// Don't forget to import the icons!
-import { 
-  MessageCircle, Video, Image, Brain, Shield, 
-  Pencil, BarChart3, Search 
-} from 'lucide-react';
 
 export default function MobileLayout({ children }) {
   const navigate = useNavigate();
-  const location = useLocation(); // Add this for desktop active state
+  const location = useLocation();
   const [isMobile, setIsMobile] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userEmail, setUserEmail] = useState('');
@@ -51,7 +49,7 @@ export default function MobileLayout({ children }) {
     window.location.href = '/app';
   };
 
-  // Mobile view: Hamburger menu opens sidebar, NO bottom tab bar
+  // Mobile view: only hamburger menu, NO bottom bar
   if (isMobile) {
     return (
       <div className="min-h-screen bg-[#111111]">
@@ -73,9 +71,9 @@ export default function MobileLayout({ children }) {
         </header>
 
         {/* Sidebar Drawer */}
-        <MobileSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} userEmail={userEmail} onSignOut={handleSignOut} />
+        <MobileSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-        {/* Main Content with padding for header */}
+        {/* Main Content */}
         <main className="pt-14 pb-6">
           <div className="container mx-auto px-4">
             {children}
@@ -88,7 +86,7 @@ export default function MobileLayout({ children }) {
   // Desktop view: Sidebar always visible
   return (
     <div className="min-h-screen bg-[#111111] flex">
-      {/* Desktop Sidebar - Always visible */}
+      {/* Desktop Sidebar */}
       <aside className="fixed left-0 top-0 bottom-0 w-72 bg-[#1a1a1a] border-r border-white/10 flex flex-col overflow-y-auto">
         <div className="p-5 border-b border-white/10">
           <div className="flex items-center gap-3">
@@ -102,13 +100,11 @@ export default function MobileLayout({ children }) {
           </div>
         </div>
 
-        {/* User Info */}
         <div className="p-5 border-b border-white/10 bg-white/5">
           <p className="text-xs text-white/50 uppercase tracking-wider">Signed in as</p>
           <p className="text-sm font-medium text-white mt-1 truncate">{userEmail}</p>
         </div>
 
-        {/* Tools Section */}
         <div className="flex-1 py-4">
           <div className="px-4">
             <p className="text-xs text-white/50 uppercase tracking-wider mb-3 px-2">Tools</p>
@@ -122,7 +118,7 @@ export default function MobileLayout({ children }) {
                     onClick={() => navigate(tool.path)}
                     className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 ${
                       isActive 
-                        ? `bg-gradient-to-r ${tool.color} text-white shadow-lg` 
+                        ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 text-cyan-400' 
                         : 'bg-gray-800/50 hover:bg-gray-800 text-white/60 hover:text-white'
                     }`}
                   >
@@ -135,15 +131,17 @@ export default function MobileLayout({ children }) {
           </div>
         </div>
 
-        {/* Sign Out Button */}
         <div className="p-5 border-t border-white/10">
           <button
             onClick={handleSignOut}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 transition-colors border border-red-500/20"
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 transition-colors"
           >
             <LogOut className="w-5 h-5 text-red-400" />
             <span className="text-sm text-red-400 font-medium">Sign Out</span>
           </button>
+          <p className="text-xs text-gray-600 text-center mt-4">
+            NEXAbot.AI v1.0
+          </p>
         </div>
       </aside>
 

@@ -18,12 +18,21 @@ export default function AuthGate({ children }) {
   const [countdown, setCountdown] = useState(0);
 
   useEffect(() => {
+    // Check URL for OAuth callback parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    
+    console.log("📍 Current URL:", window.location.href);
+    console.log("🔑 Code param:", code);
+    
     // Check for existing session
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error } = await supabase.auth.getSession();
+      console.log("📡 Session check:", session?.user?.email, error);
       
       if (session?.user) {
         localStorage.setItem("supabaseSession", "true");
+        console.log("✅ Session found, redirecting to /chat");
         window.location.href = "/chat";
         return;
       }
@@ -34,37 +43,15 @@ export default function AuthGate({ children }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth event:", event, session?.user?.email);
+      console.log("🔔 Auth event:", event, session?.user?.email);
       
       if (session?.user) {
         localStorage.setItem("supabaseSession", "true");
+        console.log("✅ Auth state changed, redirecting to /chat");
         window.location.href = "/chat";
-      } else if (event === "SIGNED_OUT") {
-        localStorage.removeItem("supabaseSession");
       }
       setUser(session?.user ?? null);
-      setLoading(false);
     });
-
-    // Handle OAuth callback from URL hash (GitHub/Google)
-    const handleAuthCallback = async () => {
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const accessToken = hashParams.get('access_token');
-      const refreshToken = hashParams.get('refresh_token');
-      
-      if (accessToken && refreshToken) {
-        const { data, error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken
-        });
-        if (!error && data.user) {
-          localStorage.setItem("supabaseSession", "true");
-          window.location.href = "/chat";
-        }
-      }
-    };
-    
-    handleAuthCallback();
 
     return () => subscription.unsubscribe();
   }, []);
@@ -141,6 +128,7 @@ export default function AuthGate({ children }) {
 
   const signInWithProvider = async (provider) => {
     try {
+      console.log(`🔐 Signing in with ${provider}...`);
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: provider,
         options: { 
@@ -151,8 +139,9 @@ export default function AuthGate({ children }) {
       if (error) {
         console.error("OAuth error:", error);
         setError(error.message);
+      } else {
+        console.log(`✅ ${provider} OAuth initiated, redirecting...`);
       }
-      // The page will redirect automatically
     } catch (err) {
       console.error("OAuth exception:", err);
       setError(`Failed to sign in with ${provider}`);

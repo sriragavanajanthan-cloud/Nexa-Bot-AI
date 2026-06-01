@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   MessageCircle, Video, Image, Brain, Shield,
   Pencil, BarChart3, Search, Sparkles, LogOut, X,
-  Clock, Trash2, Plus, Settings
+  Clock, Trash2, Plus, Settings, User
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { getChatSessions, deleteChatSession } from '@/lib/chatHistory';
@@ -23,13 +23,27 @@ const TOOLS = [
 export default function MobileSidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const [user, setUser] = useState(null);
+  const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState(null);
   const [chatSessions, setChatSessions] = useState([]);
 
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      setUserEmail(user?.email || 'User');
+      if (user) {
+        setUser(user);
+        setUserEmail(user?.email || 'User');
+        setUserName(user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User');
+        
+        const avatar = user?.user_metadata?.avatar_url || 
+                      user?.user_metadata?.picture || 
+                      user?.identities?.[0]?.identity_data?.avatar_url ||
+                      user?.identities?.[0]?.identity_data?.picture ||
+                      null;
+        setAvatarUrl(avatar);
+      }
     };
     getUser();
     loadChatSessions();
@@ -94,20 +108,44 @@ export default function MobileSidebar({ isOpen, onClose }) {
     <>
       <div className="fixed inset-0 bg-black/80 z-40" onClick={onClose} />
       <div className="fixed top-0 left-0 h-full w-full bg-[#0f0f0f] shadow-2xl z-50 flex flex-col">
-        {/* Header */}
+        {/* Header with Logo and Title */}
         <div className="p-5 border-b border-gray-800">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3"><Logo className="w-10 h-10" /><div><span className="font-bold text-white text-lg">NEXAbot.AI</span><p className="text-xs text-gray-500">Your AI Workspace</p></div></div>
+            <div className="flex items-center gap-3">
+              <Logo className="w-10 h-10" />
+              <div>
+                <span className="font-bold text-white text-lg">NEXAbot.AI</span>
+                <p className="text-xs text-gray-500">Your AI Workspace</p>
+              </div>
+            </div>
             <button onClick={onClose} className="p-2 rounded-lg hover:bg-white/10">
               <X className="w-6 h-6 text-gray-400 hover:text-white" />
             </button>
           </div>
         </div>
 
-        {/* User Info */}
-        <div className="px-5 py-3 border-b border-gray-800 bg-white/5">
-          <p className="text-xs text-gray-500 uppercase tracking-wider">Signed in as</p>
-          <p className="text-sm font-medium text-white mt-1 truncate">{userEmail}</p>
+        {/* User Profile Section */}
+        <div className="px-5 py-4 border-b border-gray-800 bg-gradient-to-r from-white/5 to-transparent">
+          <div className="flex items-center gap-3">
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt="Profile"
+                className="w-12 h-12 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-cyan-500 to-green-500 flex items-center justify-center">
+                <User className="w-6 h-6 text-white" />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-white truncate">{userName}</p>
+              <p className="text-xs text-gray-400 truncate">{userEmail}</p>
+            </div>
+            <button onClick={handleSettings} className="p-2 rounded-lg hover:bg-white/10">
+              <Settings className="w-5 h-5 text-gray-400" />
+            </button>
+          </div>
         </div>
 
         {/* Tools */}
@@ -169,9 +207,7 @@ export default function MobileSidebar({ isOpen, onClose }) {
                       <MessageCircle size={18} className={`flex-shrink-0 ${isActive ? 'text-cyan-400' : 'text-gray-500'}`} />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-white truncate font-medium">{session.title || 'New Chat'}</p>
-                        <p className="text-xs text-gray-500">
-                          {formatDate(session.updatedAt || session.createdAt)}
-                        </p>
+                        <p className="text-xs text-gray-500">{formatDate(session.updatedAt || session.createdAt)}</p>
                         {session.preview && (
                           <p className="text-xs text-gray-500 truncate mt-0.5">{session.preview}</p>
                         )}
@@ -188,17 +224,6 @@ export default function MobileSidebar({ isOpen, onClose }) {
               })}
             </div>
           )}
-        </div>
-
-        {/* Settings Button */}
-        <div className="px-5 pb-3">
-          <button
-            onClick={handleSettings}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-800/50 hover:bg-gray-700 transition-colors"
-          >
-            <Settings className="w-5 h-5 text-gray-400" />
-            <span className="text-sm text-gray-300">Settings</span>
-          </button>
         </div>
 
         {/* Sign Out Button */}

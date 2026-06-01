@@ -1,20 +1,24 @@
 import { useState, useEffect } from 'react';
-import { Menu, Sparkles, LogOut, Settings, Plus, MessageCircle, Trash2, Clock } from 'lucide-react';
+import { 
+  Menu, Sparkles, LogOut, Settings, Plus, MessageCircle, Trash2, Clock, User,
+  MessageCircle as ChatIcon, Video, Image, Brain, Shield, Pencil, BarChart3, Search
+} from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import MobileSidebar from './MobileSidebar';
 import { supabase } from '@/lib/supabase';
 import { getChatSessions, deleteChatSession } from '@/lib/chatHistory';
 import Logo from './Logo';
 
+// Tools in RAINBOW ORDER
 const TOOLS = [
-  { path: '/chat', label: 'Chat', emoji: '💬' },
-  { path: '/video-studio', label: 'Video Studio', emoji: '🎬' },
-  { path: '/image-gen', label: 'Image Gen', emoji: '🎨' },
-  { path: '/memory-bank', label: 'Memory Bank', emoji: '🧠' },
-  { path: '/ai-detector', label: 'AI Detector', emoji: '🛡️' },
-  { path: '/image-editor', label: 'Image Editor', emoji: '✏️' },
-  { path: '/graphing', label: 'Graphing', emoji: '📊' },
-  { path: '/image-amplifier', label: 'Amplify', emoji: '🔍' },
+  { path: '/chat', label: 'Chat', icon: ChatIcon, iconColor: 'text-red-400' },
+  { path: '/memory-bank', label: 'Memory Bank', icon: Brain, iconColor: 'text-orange-400' },
+  { path: '/ai-detector', label: 'AI Detector', icon: Shield, iconColor: 'text-yellow-400' },
+  { path: '/image-gen', label: 'Image Gen', icon: Image, iconColor: 'text-green-400' },
+  { path: '/image-editor', label: 'Image Editor', icon: Pencil, iconColor: 'text-blue-400' },
+  { path: '/graphing', label: 'Graphs', icon: BarChart3, iconColor: 'text-indigo-400' },
+  { path: '/image-amplifier', label: 'Amplify', icon: Search, iconColor: 'text-violet-400' },
+  { path: '/video-studio', label: 'Video Studio', icon: Video, iconColor: 'text-cyan-400' },
 ];
 
 export default function MobileLayout({ children }) {
@@ -22,7 +26,10 @@ export default function MobileLayout({ children }) {
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState(null);
   const [chatSessions, setChatSessions] = useState([]);
 
   useEffect(() => {
@@ -34,7 +41,18 @@ export default function MobileLayout({ children }) {
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      setUserEmail(user?.email || 'User');
+      if (user) {
+        setUser(user);
+        setUserEmail(user?.email || 'User');
+        setUserName(user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User');
+        
+        const avatar = user?.user_metadata?.avatar_url || 
+                      user?.user_metadata?.picture || 
+                      user?.identities?.[0]?.identity_data?.avatar_url ||
+                      user?.identities?.[0]?.identity_data?.picture ||
+                      null;
+        setAvatarUrl(avatar);
+      }
     };
     getUser();
     loadChatSessions();
@@ -93,7 +111,7 @@ export default function MobileLayout({ children }) {
           <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-white/10">
             <Menu className="w-6 h-6 text-white" />
           </button>
-          <div className="flex items-center gap-2"><Logo className="w-8 h-8" /><span className="text-sm font-semibold text-white">NEXAbot.AI</span></div>
+          <Logo className="w-8 h-8" />
           <div className="w-10" />
         </header>
         <MobileSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -102,41 +120,79 @@ export default function MobileLayout({ children }) {
     );
   }
 
-  // Desktop view with chat history
+  // Desktop view with title
   return (
     <div className="min-h-screen bg-[#111111] flex">
       <aside className="fixed left-0 top-0 bottom-0 w-80 bg-[#1a1a1a] border-r border-white/10 flex flex-col overflow-y-auto">
-        {/* Header */}
+        {/* Header with Logo and Title */}
         <div className="p-5 border-b border-white/10">
-          <div className="flex items-center gap-3"><Logo className="w-10 h-10" /><div><span className="font-bold text-white text-lg">NEXAbot.AI</span><p className="text-xs text-white/40">Your AI Workspace</p></div></div>
-          <p className="text-xs text-white/40 mt-2">Your AI Workspace</p>
+          <div className="flex items-center gap-3">
+            <Logo className="w-10 h-10" />
+            <div>
+              <span className="font-bold text-white text-lg">NEXAbot.AI</span>
+              <p className="text-xs text-white/40">Your AI Workspace</p>
+            </div>
+          </div>
         </div>
 
-        {/* User Info */}
-        <div className="p-5 border-b border-white/10 bg-white/5">
-          <p className="text-xs text-white/50 uppercase tracking-wider">Signed in as</p>
-          <p className="text-sm font-medium text-white mt-1 truncate">{userEmail}</p>
+        {/* User Profile Section */}
+        <div className="p-4 border-b border-white/10 bg-gradient-to-r from-white/5 to-transparent">
+          <div className="flex items-center gap-3">
+            {/* Avatar */}
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt="Profile"
+                className="w-12 h-12 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-cyan-500 to-green-500 flex items-center justify-center">
+                <User className="w-6 h-6 text-white" />
+              </div>
+            )}
+            
+            {/* User Info */}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-white truncate">{userName}</p>
+              <p className="text-xs text-gray-400 truncate">{userEmail}</p>
+            </div>
+            
+            {/* Settings Button */}
+            <button
+              onClick={handleSettings}
+              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+            >
+              <Settings className="w-5 h-5 text-gray-400" />
+            </button>
+          </div>
         </div>
 
-        {/* Tools Section */}
+        {/* Tools Section with Rainbow Order Icons */}
         <div className="px-4 py-4 border-b border-white/10">
           <p className="text-xs text-white/50 uppercase tracking-wider mb-3 px-2">Tools</p>
           <div className="grid grid-cols-2 gap-2">
             {TOOLS.map((tool) => {
+              const Icon = tool.icon;
               const isActive = location.pathname === tool.path || 
                                (tool.path === '/chat' && (location.pathname === '/chat' || location.pathname.startsWith('/chat/')));
               return (
                 <button
                   key={tool.path}
                   onClick={() => navigate(tool.path)}
-                  className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all ${
+                  className={`flex flex-col items-center gap-2 p-3 rounded-xl transition-all ${
                     isActive 
-                      ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 text-cyan-400' 
-                      : 'bg-gray-800/50 hover:bg-gray-800 text-white/60 hover:text-white'
+                      ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30' 
+                      : 'bg-gray-800/50 hover:bg-gray-800'
                   }`}
                 >
-                  <span className="text-2xl">{tool.emoji}</span>
-                  <span className="text-xs font-medium">{tool.label}</span>
+                  <Icon 
+                    size={24} 
+                    className={isActive ? 'text-cyan-400' : tool.iconColor} 
+                    strokeWidth={1.5}
+                  />
+                  <span className={`text-xs font-medium ${isActive ? 'text-cyan-400' : 'text-gray-400'}`}>
+                    {tool.label}
+                  </span>
                 </button>
               );
             })}
@@ -198,17 +254,6 @@ export default function MobileLayout({ children }) {
               })}
             </div>
           )}
-        </div>
-
-        {/* Settings Button */}
-        <div className="px-4 pb-3">
-          <button
-            onClick={handleSettings}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-800/50 hover:bg-gray-700 transition-colors"
-          >
-            <Settings className="w-5 h-5 text-gray-400" />
-            <span className="text-sm text-gray-300">Settings</span>
-          </button>
         </div>
 
         {/* Sign Out Button */}

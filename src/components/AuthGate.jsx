@@ -1,4 +1,3 @@
-import Logo from "./Logo";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -19,19 +18,35 @@ export default function AuthGate({ children }) {
   const [countdown, setCountdown] = useState(0);
 
   useEffect(() => {
-    const getSession = async () => {
+    // Check for existing session
+    const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        localStorage.setItem("supabaseSession", "true");
+        window.location.href = "/chat";
+        return;
+      }
       setLoading(false);
     };
+    
+    checkSession();
 
-    getSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth event:", event, session?.user?.email);
+      
+      if (session?.user) {
+        localStorage.setItem("supabaseSession", "true");
+        window.location.href = "/chat";
+      } else if (event === "SIGNED_OUT") {
+        localStorage.removeItem("supabaseSession");
+      }
       setUser(session?.user ?? null);
+      setLoading(false);
     });
 
-    // Handle OAuth callback from URL hash
+    // Handle OAuth callback from URL hash (GitHub/Google)
     const handleAuthCallback = async () => {
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const accessToken = hashParams.get('access_token');
@@ -43,10 +58,8 @@ export default function AuthGate({ children }) {
           refresh_token: refreshToken
         });
         if (!error && data.user) {
-          setUser(data.user);
-      localStorage.setItem("supabaseSession", "true");
-      window.location.href = "/chat";
-          window.history.replaceState({}, document.title, window.location.pathname);
+          localStorage.setItem("supabaseSession", "true");
+          window.location.href = "/chat";
         }
       }
     };
@@ -127,17 +140,22 @@ export default function AuthGate({ children }) {
   };
 
   const signInWithProvider = async (provider) => {
-    const redirectUrl = `${window.location.origin}/app`;
-    
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: provider,
-      options: { 
-        redirectTo: redirectUrl,
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: provider,
+        options: { 
+          redirectTo: `${window.location.origin}/chat`,
+        }
+      });
+      
+      if (error) {
+        console.error("OAuth error:", error);
+        setError(error.message);
       }
-    });
-    
-    if (error) {
-      setError(error.message);
+      // The page will redirect automatically
+    } catch (err) {
+      console.error("OAuth exception:", err);
+      setError(`Failed to sign in with ${provider}`);
     }
   };
 

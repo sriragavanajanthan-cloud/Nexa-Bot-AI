@@ -2,7 +2,7 @@
 
 **Your personal AI workspace – chat, create, detect, edit, and generate videos, images, and data visualizations.**
 
-[![Live App](https://img.shields.io/badge/Live%20App-Vercel-000)](https://nexa-bot-ai.vercel.app)
+[![Live App](https://img.shields.io/badge/Live%20App-Vercel-000)](https://nexabot-ai-new.vercel.app)
 [![Backend API](https://img.shields.io/badge/Backend%20API-Render-46E3B7)](https://nexabot-video-api.onrender.com/health)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -12,20 +12,21 @@
 
 | Module               | What It Does                                                                 |
 |----------------------|------------------------------------------------------------------------------|
-| 💬 **Smart Chat**    | DIY AI engine with persistent conversation history, pinning, archiving       |
+| 💬 **Smart Chat**    | AI chat with **persistent session history** (saved conversations, load/delete) |
 | 🧠 **Memory Bank**   | Save important messages, add tags, star ratings, and export/import JSON      |
 | 🕵️ **AI Detector**   | Detect AI‑generated text and images with confidence scores                   |
 | 🎨 **Image Generation** | Create images from text prompts (AI based)                               |
 | ✏️ **Image Editor**  | Basic editing (crop, resize, filters)                                       |
 | 📊 **Graphing Tool** | Turn data into charts (line, bar, pie) from CSV or manual input              |
 | 🔍 **Image Amplifier** | Upscale images while preserving quality                                  |
-| 🎬 **AI Video Studio**| Search royalty‑free videos, add music/text, apply effects, and get shareable links |
+| 🎬 **AI Video Studio**| Search royalty‑free videos, add music/text, apply effects, get shareable link |
+| ⚙️ **Settings**      | Profile management, preferences (dark mode, notifications), data export/import |
 
 ---
 
 ## 🚀 Live Demo
 
-- **Frontend:** [https://nexa-bot-ai.vercel.app](https://nexa-bot-ai.vercel.app)  
+- **Frontend:** [https://nexabot-ai-new.vercel.app](https://nexabot-ai-new.vercel.app)  
 - **Video API Health:** [https://nexabot-video-api.onrender.com/health](https://nexabot-video-api.onrender.com/health)
 
 > *Note: The video studio uses a separate backend (Render free tier). First request may take a few seconds to wake up.*
@@ -39,7 +40,7 @@
 | **Frontend**    | React 18, Vite, Tailwind CSS, Framer Motion, Lucide Icons                   |
 | **Backend (Chat & Tools)** | DIY AI engine, localStorage, Supabase (auth)                         |
 | **Video Backend** | Flask, FFmpeg, Supabase Storage, Render, Pixabay API, SoundHelix           |
-| **Authentication** | Supabase (Magic Link, Google, GitHub)                                   |
+| **Authentication** | Supabase (Magic Link/OTP, Google, GitHub)                               |
 | **Mobile**      | Capacitor (Android APK)                                                     |
 
 ---

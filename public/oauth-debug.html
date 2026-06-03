@@ -5,7 +5,7 @@
     <style>
         body { background: #111; color: white; font-family: monospace; padding: 20px; }
         button { background: cyan; color: black; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; margin: 10px; }
-        pre { background: #1a1a1a; padding: 15px; overflow: auto; margin-top: 20px; border-radius: 8px; }
+        pre { background: #1a1a1a; padding: 15px; overflow: auto; margin-top: 20px; border-radius: 8px; max-height: 400px; }
         .success { color: #00ff00; }
         .error { color: #ff4444; }
         .info { color: #ffaa00; }
@@ -15,129 +15,134 @@
 </head>
 <body>
     <h1>🔐 OAuth Debug Tool</h1>
-    <p>This tool helps diagnose GitHub/Google OAuth issues.</p>
     
     <div class="box">
         <h3>Current Status:</h3>
-        <div id="status">Checking...</div>
+        <div id="status">Initializing...</div>
     </div>
     
     <div>
         <button id="githubBtn">🔐 Test GitHub Login</button>
         <button id="googleBtn">🔐 Test Google Login</button>
         <button id="clearBtn">🗑️ Clear Session</button>
+        <button id="checkBtn">🔄 Check Session</button>
     </div>
     
     <div class="box">
         <h3>Debug Log:</h3>
-        <pre id="log">Waiting for action...</pre>
+        <pre id="log">Initializing...</pre>
     </div>
-    
+
     <script>
-        const SUPABASE_URL = 'https://qxgkityhhwgwohehetek.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4Z2tpdHloaHdnd29oZWhldGVrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4ODg2ODMsImV4cCI6MjA2MDQ2NDY4M30.1sJiBjO_TySmCfuBw5H5kbbVUe4dsLzTI0I1kRXYkaY';
-        
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        const logDiv = document.getElementById('log');
-        const statusDiv = document.getElementById('status');
-        
-        function log(msg, type = 'info') {
-            const timestamp = new Date().toLocaleTimeString();
-            const color = type === 'error' ? 'error' : (type === 'success' ? 'success' : 'info');
-            console.log(`[${timestamp}] ${msg}`);
-            logDiv.innerHTML += `<div class="${color}">[${timestamp}] ${msg}</div>`;
-            logDiv.scrollTop = logDiv.scrollHeight;
-        }
-        
-        function updateStatus(text, isError = false) {
-            statusDiv.innerHTML = `<span class="${isError ? 'error' : 'success'}">${text}</span>`;
-        }
-        
-        async function checkSession() {
-            log('Checking current session...');
-            try {
-                const { data: { session }, error } = await supabase.auth.getSession();
-                if (error) {
-                    log(`Session check error: ${error.message}`, 'error');
-                    updateStatus(`Error: ${error.message}`, true);
+        (function() {
+            const SUPABASE_URL = 'https://qxgkityhhwgwohehetek.supabase.co';
+            const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4Z2tpdHloaHdnd29oZWhldGVrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4ODg2ODMsImV4cCI6MjA2MDQ2NDY4M30.1sJiBjO_TySmCfuBw5H5kbbVUe4dsLzTI0I1kRXYkaY';
+            
+            let supabaseClient = null;
+            const logDiv = document.getElementById('log');
+            const statusDiv = document.getElementById('status');
+            
+            function log(msg, type = 'info') {
+                const timestamp = new Date().toLocaleTimeString();
+                console.log(`[${timestamp}] ${msg}`);
+                const colorClass = type === 'error' ? 'error' : (type === 'success' ? 'success' : 'info');
+                logDiv.innerHTML += `<div class="${colorClass}">[${timestamp}] ${msg}</div>`;
+                logDiv.scrollTop = logDiv.scrollHeight;
+            }
+            
+            function updateStatus(text, isError = false) {
+                statusDiv.innerHTML = `<span class="${isError ? 'error' : 'success'}">${text}</span>`;
+            }
+            
+            async function initSupabase() {
+                try {
+                    log('Creating Supabase client...');
+                    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                    log('✅ Supabase client ready');
+                    await checkSession();
+                } catch (err) {
+                    log(`❌ Failed: ${err.message}`, 'error');
+                    updateStatus('Init failed', true);
+                }
+            }
+            
+            async function checkSession() {
+                if (!supabaseClient) {
+                    log('Client not ready', 'error');
                     return;
                 }
-                if (session) {
-                    log(`✅ Session active! User: ${session.user.email}`, 'success');
-                    updateStatus(`Logged in as: ${session.user.email}`);
-                    log(`Redirecting to /chat in 2 seconds...`);
-                    setTimeout(() => {
-                        window.location.href = '/chat';
-                    }, 2000);
-                } else {
-                    log('❌ No active session', 'error');
-                    updateStatus('Not logged in');
-                }
-            } catch (err) {
-                log(`Exception: ${err.message}`, 'error');
-            }
-        }
-        
-        async function testOAuth(provider) {
-            log(`🚀 Starting ${provider} OAuth test...`);
-            log(`Redirect URL will be: ${window.location.origin}/oauth-debug.html`);
-            
-            try {
-                const { data, error } = await supabase.auth.signInWithOAuth({
-                    provider: provider,
-                    options: { 
-                        redirectTo: window.location.origin + '/oauth-debug.html'
-                    }
-                });
                 
-                if (error) {
-                    log(`❌ OAuth Error: ${error.message}`, 'error');
-                    updateStatus(`OAuth failed: ${error.message}`, true);
-                } else {
-                    log(`✅ OAuth initiated, redirecting to ${provider}...`, 'success');
+                log('Checking session...');
+                try {
+                    const { data: { session }, error } = await supabaseClient.auth.getSession();
+                    
+                    if (error) {
+                        log(`Error: ${error.message}`, 'error');
+                        updateStatus(`Error: ${error.message}`, true);
+                        return;
+                    }
+                    
+                    if (session) {
+                        log(`✅ Logged in as: ${session.user.email}`, 'success');
+                        updateStatus(`Logged in as: ${session.user.email}`);
+                        log('Redirecting to /chat...');
+                        setTimeout(() => { window.location.href = '/chat'; }, 1500);
+                    } else {
+                        log('❌ Not logged in', 'error');
+                        updateStatus('Not logged in');
+                    }
+                } catch (err) {
+                    log(`Exception: ${err.message}`, 'error');
                 }
-            } catch (err) {
-                log(`❌ Exception: ${err.message}`, 'error');
             }
-        }
-        
-        async function clearSession() {
-            log('Clearing session...');
-            await supabase.auth.signOut();
-            localStorage.clear();
-            sessionStorage.clear();
-            log('Session cleared. Refresh the page.', 'success');
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
-        }
-        
-        // Check for OAuth callback on page load
-        async function handleCallback() {
-            log(`Page loaded at: ${window.location.href}`);
             
-            // Check URL for OAuth artifacts
-            const urlParams = new URLSearchParams(window.location.search);
-            const hashParams = new URLSearchParams(window.location.hash.substring(1));
-            const hasCode = urlParams.has('code') || hashParams.has('access_token');
-            
-            log(`Has code in URL: ${hasCode}`);
-            
-            if (hasCode) {
-                log('🔄 OAuth callback detected! Getting session...', 'info');
-                await checkSession();
-            } else {
-                await checkSession();
+            async function testOAuth(provider) {
+                if (!supabaseClient) {
+                    log('Client not ready', 'error');
+                    return;
+                }
+                
+                log(`Starting ${provider} login...`);
+                updateStatus(`Logging in with ${provider}...`);
+                
+                try {
+                    const { error } = await supabaseClient.auth.signInWithOAuth({
+                        provider: provider,
+                        options: { 
+                            redirectTo: window.location.origin + '/oauth-debug.html'
+                        }
+                    });
+                    
+                    if (error) {
+                        log(`❌ ${provider} error: ${error.message}`, 'error');
+                        updateStatus(`Failed: ${error.message}`, true);
+                    } else {
+                        log(`✅ Redirecting to ${provider}...`, 'success');
+                    }
+                } catch (err) {
+                    log(`❌ Exception: ${err.message}`, 'error');
+                }
             }
-        }
-        
-        // Set up event listeners
-        document.getElementById('githubBtn').onclick = () => testOAuth('github');
-        document.getElementById('googleBtn').onclick = () => testOAuth('google');
-        document.getElementById('clearBtn').onclick = clearSession;
-        
-        // Run on page load
-        handleCallback();
+            
+            async function clearSession() {
+                if (!supabaseClient) return;
+                log('Clearing session...');
+                await supabaseClient.auth.signOut();
+                localStorage.clear();
+                sessionStorage.clear();
+                log('✅ Cleared. Reloading...', 'success');
+                setTimeout(() => { window.location.reload(); }, 1000);
+            }
+            
+            // Setup buttons
+            document.getElementById('githubBtn').onclick = () => testOAuth('github');
+            document.getElementById('googleBtn').onclick = () => testOAuth('google');
+            document.getElementById('clearBtn').onclick = clearSession;
+            document.getElementById('checkBtn').onclick = checkSession;
+            
+            // Start
+            initSupabase();
+        })();
     </script>
 </body>
 </html>
